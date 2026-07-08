@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>About Us - Buyzo Cart</title>
+  <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+  <link rel="icon" type="image/png" sizes="48x48" href="favicon-48.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="favicon-180.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="favicon-512.png">
+  <meta name="description" content="Learn more about Buyzo Cart - Your trusted online shopping destination."/>
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://buyzocartshop.com/about">
+  <meta property="og:image" content="https://buyzocartshop.com/logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <div class="brand" onclick="window.location.href='/'">
+        <span class="chip">BUYZO</span>
+        <span>Cart</span>
+      </div>
+      <div class="cta">
+        <button class="theme-toggle-btn" id="themeToggleBtn" title="Toggle dark mode" aria-label="Toggle dark mode">
+          <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+          <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="policy-page">
+      <div class="back-button" onclick="window.location.href='/'">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;">
+          <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+        Back to Home
+      </div>
+      
+      <div class="policy-content">
+        
+        <h2>About Buyzo Cart</h2>
+        <p>Welcome to Buyzo Cart, your trusted online shopping destination for quality products at affordable prices.</p>
+        <h3>Our Story</h3>
+        <p>Buyzo Cart was founded with a simple mission: to make online shopping accessible, convenient, and enjoyable for everyone. We started as a small team passionate about e-commerce and have grown into a platform that serves thousands of customers across India.</p>
+        <h3>Our Values</h3>
+        <ul>
+          <li><strong>Quality:</strong> We carefully curate our product selection to ensure we offer only the best quality items.</li>
+          <li><strong>Customer Focus:</strong> Our customers are at the heart of everything we do. We strive to provide exceptional service and support.</li>
+          <li><strong>Transparency:</strong> We believe in honest pricing and clear communication with our customers.</li>
+          <li><strong>Innovation:</strong> We continuously improve our platform and services to enhance your shopping experience.</li>
+        </ul>
+        <h3>Why Choose Buyzo Cart?</h3>
+        <ul>
+          <li>Wide selection of products across multiple categories</li>
+          <li>Competitive prices and regular discounts</li>
+          <li>Fast and reliable delivery across India</li>
+          <li>Secure payment options</li>
+          <li>Responsive customer support</li>
+          <li>Easy returns and refunds</li>
+        </ul>
+        <h3>Our Team</h3>
+        <p>Our diverse team of professionals is dedicated to making your shopping experience seamless and enjoyable. From our customer support representatives to our logistics partners, everyone at Buyzo Cart is committed to serving you better.</p>
+        <h3>Looking Ahead</h3>
+        <p>We're constantly working to expand our product range, improve our services, and reach more customers across India. Our goal is to become your go-to online shopping destination for all your needs.</p>
+        <p>Thank you for choosing Buyzo Cart. We appreciate your trust and look forward to serving you!</p>
+
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <div class="footer-container">
+      <div class="copyright">
+        &copy; 2024 Buyzo Cart. All rights reserved.
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    (function(){
+      var saved = localStorage.getItem('theme') || 'light';
+      document.documentElement.setAttribute('data-theme', saved);
+      var btn = document.getElementById('themeToggleBtn');
+      if (!btn) return;
+      function updateIcons(t) {
+        var sun = btn.querySelector('.sun-icon'), moon = btn.querySelector('.moon-icon');
+        if (t === 'dark') { if(sun)sun.style.display='none'; if(moon)moon.style.display='block'; }
+        else              { if(sun)sun.style.display='block'; if(moon)moon.style.display='none'; }
+      }
+      updateIcons(saved);
+      btn.addEventListener('click', function(){
+        var cur = document.documentElement.getAttribute('data-theme');
+        var next = cur === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', next);
+        localStorage.setItem('theme', next);
+        updateIcons(next);
+      });
+    })();
+  </script>
+</body>
+</html>
