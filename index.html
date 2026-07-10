@@ -1691,8 +1691,18 @@
           <div style="display:flex;justify-content:space-between;margin-bottom:12px;padding-bottom:8px;border-bottom:1px dashed var(--border)"><div>Payment Gateway Charge</div><div id="sumGateway">₹0</div></div>
           <div style="display:flex;justify-content:space-between;font-weight:700;margin-top:8px;font-size:18px"><div>Total</div><div id="sumTotal">-</div></div>
         </div>
+
+        <!-- Razorpay Trust Message -->
+        <div class="razorpay-trust-badge" style="text-align:center;margin:16px 0;padding:12px;border:1.5px solid var(--border);border-radius:var(--radius);background:var(--surface);">
+          <div style="font-size:13.5px;font-weight:700;color:var(--text);margin-bottom:3px;display:flex;align-items:center;justify-content:center;gap:6px;">
+            <span>🔒</span> 100% Secure Payment via Razorpay
+          </div>
+          <div style="font-size:11.5px;color:var(--muted);line-height:1.4;">
+            All online payments are encrypted and securely processed by Razorpay.
+          </div>
+        </div>
         
-        <div style="height:16px"></div>
+        <div style="height:8px"></div>
         <div style="display:flex;gap:12px;flex-wrap:wrap">
           <button id="confirmOrder" class="btn" style="flex:1">Confirm & Place Order</button>
           <button id="payBack" class="btn secondary" style="flex:1">Back</button>
@@ -2412,6 +2422,9 @@
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js" defer></script>
 
   <script src="security.js" defer></script>
+
+  <!-- Razorpay Checkout Script -->
+  <script src="https://checkout.razorpay.com/v1/checkout.js" defer></script>
 
   <script src="main.js" defer></script>
   <script>

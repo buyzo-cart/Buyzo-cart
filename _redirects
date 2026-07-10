@@ -1,6 +1,10 @@
 # Buyzo Cart — URL Redirects (Netlify)
 # Yeh file /public ya root folder mein rakhein
 
+# API Redirects for Razorpay Payment Gateway
+/api/create-order     /.netlify/functions/create-order   200
+/api/verify-payment   /.netlify/functions/verify-payment 200
+
 # .html URLs ko clean URLs pe redirect karo
 /account.html        /account           301
 /refund.html         /refund            301

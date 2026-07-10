@@ -2831,10 +2831,12 @@
         showPage('productsPage');
         return;
       }
+
       const orderId = generateOrderId();
       currentOrderId = orderId;
       const paymentMethod = document.querySelector('input[name="pay"]:checked').value;
       const quantity = parseInt(document.getElementById('qtySelect').value) || 1;
+
       // Size: only include if product has sizes
       var _szSect = document.getElementById('sizeSection');
       var _szVisible = _szSect && _szSect.style.display !== 'none';
@@ -2847,94 +2849,241 @@
       const gatewayChargePercent = adminSettings.gatewayChargePercent || 2;
       const gatewayCharge = paymentMethod === 'prepaid' ? subtotal * (gatewayChargePercent / 100) : 0;
       const total = subtotal + deliveryCharge + gatewayCharge;
-      try {
-        const confirmBtn = document.getElementById('confirmOrder');
-        confirmBtn.innerHTML = '<div class="loading-spinner"></div> Placing Order...';
-        confirmBtn.disabled = true;
-        const orderData = {
-          orderId: orderId,
-          userId: currentUser.uid,
-          username: userInfo.fullName,
-          userEmail: currentUser.email,
-          productId: currentProduct.id,
-          productName: currentProduct.name || currentProduct.title,
-          productImage: getProductImage(currentProduct),
-          productPrice: productPrice,
-          quantity: quantity,
-          size: size,
-          subtotal: subtotal,
-          deliveryCharge: deliveryCharge,
-          gatewayCharge: gatewayCharge,
-          totalAmount: total,
-          paymentMethod: paymentMethod,
-          status: 'placed',
-          orderDate: Date.now(),
-          userInfo: userInfo,
-          address: {
-            name: userInfo.fullName || '',
-            mobile: userInfo.mobile || '',
-            street: userInfo.house || userInfo.address || '',
-            city: userInfo.city || '',
-            state: userInfo.state || '',
-            pincode: userInfo.pincode || ''
-          },
-          items: [{
-            name: (currentProduct.name || currentProduct.title || 'Product'),
-            image: getProductImage(currentProduct),
-            price: productPrice,
-            quantity: quantity,
-            size: size,
-            productId: currentProduct.id
-          }],
-          assignedDeliveryBoyId: null,
-          cancelledBy: null,
-          cancelReason: null,
-          deliveredDate: null,
-          cancelledDate: null,
-          tracking: {
-            placed: Date.now(),
-            confirmed: null,
-            shipped: null,
-            out_for_delivery: null,
-            delivered: null
-          }
-        };
-        await window.firebase.set(window.firebase.ref(window.firebase.database, 'orders/' + orderId), orderData);
-        await window.firebase.set(window.firebase.ref(window.firebase.database, 'userOrders/' + currentUser.uid + '/' + orderId), true);
-        // Track order count per product (for trending + scoring)
-        try {
-          const _psRef = window.firebase.ref(window.firebase.database, 'productStats/' + orderData.productId + '/orderCount');
-          const _psSnap = await window.firebase.get(_psRef);
-          const _newCount = (_psSnap.val() || 0) + 1;
-          await window.firebase.set(_psRef, _newCount);
-          if (_newCount >= 5) {
-            const _pRef = window.firebase.ref(window.firebase.database, 'productStats/' + orderData.productId + '/autoTrending');
-            const _manSnap = await window.firebase.get(window.firebase.ref(window.firebase.database, 'productStats/' + orderData.productId + '/manualOverride'));
-            if (!_manSnap.val()) {
-              await window.firebase.set(_pRef, true);
-              await window.firebase.update(window.firebase.ref(window.firebase.database, 'products/' + orderData.productId), { isTrending: true });
-            }
-          }
-        } catch(_e) { /* non-critical */ }
-        let cachedOrders = cacheManager.get(CACHE_KEYS.ORDERS) || [];
-        cachedOrders.push(orderData);
-        cacheManager.set(CACHE_KEYS.ORDERS, cachedOrders);
-        sendOrderNotification(currentUser.email, orderId, currentProduct.name, total);
-        document.getElementById('orderIdDisplay').textContent = orderId;
-        showPage('successPage');
-        showToast('Order placed successfully!', 'success');
-        if (document.getElementById('myOrdersPage')?.classList.contains('active')) showMyOrders();
-      } catch (error) {
-        console.error('Error placing order:', error);
-        showToast('Order placed successfully!', 'success');
-        document.getElementById('orderIdDisplay').textContent = orderId;
-        showPage('successPage');
-      } finally {
-        const confirmBtn = document.getElementById('confirmOrder');
+
+      const confirmBtn = document.getElementById('confirmOrder');
+      const backBtn = document.getElementById('payBack');
+
+      function resetConfirmButton() {
         if (confirmBtn) {
           confirmBtn.textContent = 'Confirm & Place Order';
           confirmBtn.disabled = false;
         }
+        if (backBtn) {
+          backBtn.disabled = false;
+        }
+      }
+
+      const orderData = {
+        orderId: orderId,
+        userId: currentUser.uid,
+        username: userInfo.fullName,
+        userEmail: currentUser.email,
+        productId: currentProduct.id,
+        productName: currentProduct.name || currentProduct.title,
+        productImage: getProductImage(currentProduct),
+        productPrice: productPrice,
+        quantity: quantity,
+        size: size,
+        subtotal: subtotal,
+        deliveryCharge: deliveryCharge,
+        gatewayCharge: gatewayCharge,
+        totalAmount: total,
+        paymentMethod: paymentMethod,
+        status: 'placed',
+        orderDate: Date.now(),
+        userInfo: userInfo,
+        address: {
+          name: userInfo.fullName || '',
+          mobile: userInfo.mobile || '',
+          street: userInfo.house || userInfo.address || '',
+          city: userInfo.city || '',
+          state: userInfo.state || '',
+          pincode: userInfo.pincode || ''
+        },
+        items: [{
+          name: (currentProduct.name || currentProduct.title || 'Product'),
+          image: getProductImage(currentProduct),
+          price: productPrice,
+          quantity: quantity,
+          size: size,
+          productId: currentProduct.id
+        }],
+        assignedDeliveryBoyId: null,
+        cancelledBy: null,
+        cancelReason: null,
+        deliveredDate: null,
+        cancelledDate: null,
+        tracking: {
+          placed: Date.now(),
+          confirmed: null,
+          shipped: null,
+          out_for_delivery: null,
+          delivered: null
+        }
+      };
+
+      // Helper function to save order to Firebase after successful validation
+      async function finalizeOrderPlacement(oId, oData, oTotal) {
+        try {
+          await window.firebase.set(window.firebase.ref(window.firebase.database, 'orders/' + oId), oData);
+          await window.firebase.set(window.firebase.ref(window.firebase.database, 'userOrders/' + currentUser.uid + '/' + oId), true);
+
+          // Track order count per product (for trending + scoring)
+          try {
+            const _psRef = window.firebase.ref(window.firebase.database, 'productStats/' + oData.productId + '/orderCount');
+            const _psSnap = await window.firebase.get(_psRef);
+            const _newCount = (_psSnap.val() || 0) + 1;
+            await window.firebase.set(_psRef, _newCount);
+            if (_newCount >= 5) {
+              const _pRef = window.firebase.ref(window.firebase.database, 'productStats/' + oData.productId + '/autoTrending');
+              const _manSnap = await window.firebase.get(window.firebase.ref(window.firebase.database, 'productStats/' + oData.productId + '/manualOverride'));
+              if (!_manSnap.val()) {
+                await window.firebase.set(_pRef, true);
+                await window.firebase.update(window.firebase.ref(window.firebase.database, 'products/' + oData.productId), { isTrending: true });
+              }
+            }
+          } catch(_e) { /* non-critical */ }
+
+          let cachedOrders = cacheManager.get(CACHE_KEYS.ORDERS) || [];
+          cachedOrders.push(oData);
+          cacheManager.set(CACHE_KEYS.ORDERS, cachedOrders);
+          sendOrderNotification(currentUser.email, oId, currentProduct.name, oTotal);
+          document.getElementById('orderIdDisplay').textContent = oId;
+          showPage('successPage');
+          showToast('Order placed successfully!', 'success');
+          if (document.getElementById('myOrdersPage')?.classList.contains('active')) showMyOrders();
+        } catch (error) {
+          console.error('Error finalizing order:', error);
+          showToast('Error finalizing order placement. Please contact support.', 'error');
+          resetConfirmButton();
+        }
+      }
+
+      // If Prepaid, initiate Razorpay payment checkout flow
+      if (paymentMethod === 'prepaid') {
+        try {
+          if (confirmBtn) {
+            confirmBtn.innerHTML = '<div class="loading-spinner" style="display:inline-block;width:12px;height:12px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin .7s linear infinite;margin-right:6px;vertical-align:middle;"></div> Initializing Payment...';
+            confirmBtn.disabled = true;
+          }
+          if (backBtn) {
+            backBtn.disabled = true;
+          }
+
+          // Create order on the secure backend
+          const createResponse = await fetch('/api/create-order', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              amount: total,
+              receipt: orderId
+            })
+          });
+
+          if (!createResponse.ok) {
+            const errBody = await createResponse.json().catch(() => ({}));
+            throw new Error(errBody.error || errBody.details || 'Failed to create payment order.');
+          }
+
+          const orderDetails = await createResponse.json();
+
+          // Prepare Razorpay Checkout options
+          const rzpOptions = {
+            key: orderDetails.key_id,
+            amount: orderDetails.amount,
+            currency: orderDetails.currency,
+            name: "Buyzo Cart",
+            description: `${currentProduct.name || 'Checkout'} x ${quantity}`,
+            image: getProductImage(currentProduct) || "https://buyzocartshop.com/logo.png",
+            order_id: orderDetails.order_id,
+            handler: async function (response) {
+              try {
+                if (confirmBtn) {
+                  confirmBtn.innerHTML = '<div class="loading-spinner" style="display:inline-block;width:12px;height:12px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin .7s linear infinite;margin-right:6px;vertical-align:middle;"></div> Verifying Payment...';
+                }
+
+                // Verify the payment securely on the backend
+                const verifyResponse = await fetch('/api/verify-payment', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json'
+                  },
+                  body: JSON.stringify({
+                    razorpay_payment_id: response.razorpay_payment_id,
+                    razorpay_order_id: response.razorpay_order_id,
+                    razorpay_signature: response.razorpay_signature
+                  })
+                });
+
+                if (!verifyResponse.ok) {
+                  const errBody = await verifyResponse.json().catch(() => ({}));
+                  throw new Error(errBody.error || 'Payment verification failed.');
+                }
+
+                const verifyData = await verifyResponse.json();
+
+                if (verifyData.verified) {
+                  // Save Razorpay signature & details securely in orderData
+                  orderData.paymentDetails = {
+                    razorpayPaymentId: response.razorpay_payment_id,
+                    razorpayOrderId: response.razorpay_order_id,
+                    razorpaySignature: response.razorpay_signature,
+                    paymentMethod: 'prepaid',
+                    amount: total,
+                    status: 'success',
+                    verifiedAt: Date.now()
+                  };
+
+                  // Verification successful -> Create order in Firebase database
+                  await finalizeOrderPlacement(orderId, orderData, total);
+                } else {
+                  throw new Error('Verification failed. Payment signature is invalid.');
+                }
+
+              } catch (verifyErr) {
+                console.error("[Razorpay Verification Error]:", verifyErr);
+                showToast(verifyErr.message || 'Payment verification failed. Order not created.', 'error');
+                resetConfirmButton();
+              }
+            },
+            prefill: {
+              name: userInfo.fullName,
+              email: currentUser.email,
+              contact: userInfo.mobile
+            },
+            theme: {
+              color: "#2563eb"
+            },
+            modal: {
+              ondismiss: function () {
+                showToast('Payment cancelled by user.', 'error');
+                resetConfirmButton();
+              }
+            }
+          };
+
+          const rzpInstance = new Razorpay(rzpOptions);
+          rzpInstance.on('payment.failed', function (failedResponse) {
+            console.error("[Razorpay Payment Failed]:", failedResponse.error);
+            showToast(failedResponse.error.description || 'Payment failed. Please try again.', 'error');
+            resetConfirmButton();
+          });
+          rzpInstance.open();
+
+        } catch (err) {
+          console.error("[Razorpay Initialization Error]:", err);
+          showToast(err.message || 'Failed to initialize payment gateway. Please try again.', 'error');
+          resetConfirmButton();
+        }
+        return; // Exit and wait for handler callback
+      }
+
+      // COD Path directly places the order
+      try {
+        if (confirmBtn) {
+          confirmBtn.innerHTML = '<div class="loading-spinner" style="display:inline-block;width:12px;height:12px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin .7s linear infinite;margin-right:6px;vertical-align:middle;"></div> Placing Order...';
+          confirmBtn.disabled = true;
+        }
+        if (backBtn) {
+          backBtn.disabled = true;
+        }
+        await finalizeOrderPlacement(orderId, orderData, total);
+      } catch (error) {
+        console.error('Error placing order:', error);
+        showToast('Error placing order. Please try again.', 'error');
+        resetConfirmButton();
       }
     }
 
