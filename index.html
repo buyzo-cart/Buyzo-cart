@@ -4,6 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=5,user-scalable=yes" />
   <title>Buyzocart Shop - Best Deals & Products</title>
+  <link rel="preconnect" href="https://buyzocart-default-rtdb.firebaseio.com">
+  <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
   <link rel="icon" type="image/png" href="favicon.png">
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
 <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48.png">
@@ -606,8 +609,8 @@
     .ot-step-label.done{color:#22c55e;}
 </style>
   <link rel="stylesheet" href="style.css">
-  <!-- API Keys & Config — sabse pehle load hoga -->
-  <script src="config.js"></script>
+  <!-- API Keys & Config — load deferred to not block parsing but preserve order -->
+  <script src="config.js" defer></script>
   <meta http-equiv="Content-Security-Policy" content="frame-ancestors 'none';">
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <style>
@@ -1075,6 +1078,206 @@
         <div class="product-card-skeleton"><div class="skeleton-box sk-img"></div><div class="sk-body"><div class="skeleton-box sk-title"></div><div class="skeleton-box sk-price"></div></div></div>
         <div class="product-card-skeleton"><div class="skeleton-box sk-img"></div><div class="sk-body"><div class="skeleton-box sk-title"></div><div class="skeleton-box sk-price"></div></div></div>
       </div>
+
+      <script id="bz-critical-loader">
+        (function() {
+          // 1. Theme Restore
+          try {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+          } catch(e) {}
+
+          // Helper to get cache
+          function getCached(key) {
+            try {
+              const raw = localStorage.getItem(key);
+              if (!raw) return null;
+              const parsed = JSON.parse(raw);
+              return parsed ? parsed.data : null;
+            } catch(e) { return null; }
+          }
+
+          // Helper to get product image
+          function getProductImg(product) {
+            if (!product) return "https://via.placeholder.com/300x300/f3f4f6/64748b?text=No+Image";
+            if (Array.isArray(product.images) && product.images.length > 0) return product.images[0];
+            const possible = ['image', 'img', 'imageUrl', 'photo'];
+            for (const f of possible) {
+              if (product[f]) {
+                if (typeof product[f] === 'string') return product[f];
+                if (Array.isArray(product[f]) && product[f].length > 0) return product[f][0];
+              }
+            }
+            return "https://via.placeholder.com/300x300/f3f4f6/64748b?text=No+Image";
+          }
+
+          // Dynamic preloads
+          try {
+            const cachedBans = getCached('bz_banners');
+            if (cachedBans && cachedBans.length > 0) {
+              const firstBannerImg = getProductImg(cachedBans[0]);
+              if (firstBannerImg) {
+                const link = document.createElement('link');
+                link.rel = 'preload';
+                link.as = 'image';
+                link.href = firstBannerImg;
+                document.head.appendChild(link);
+              }
+            }
+            const cachedCats = getCached('bz_categories');
+            if (cachedCats && cachedCats.length > 0) {
+              cachedCats.slice(0, 4).forEach(cat => {
+                const imgUrl = getProductImg(cat);
+                if (imgUrl) {
+                  const link = document.createElement('link');
+                  link.rel = 'preload';
+                  link.as = 'image';
+                  link.href = imgUrl;
+                  document.head.appendChild(link);
+                }
+              });
+            }
+          } catch(e) {}
+
+          // 2. User Restore (instant render)
+          try {
+            const _cu = localStorage.getItem('_bz_cached_user');
+            if (_cu) {
+              const _ud = JSON.parse(_cu);
+              const _prof = document.getElementById('userProfile');
+              const _login = document.getElementById('openLoginTop');
+              const _mLogin = document.getElementById('mobileLoginBtn');
+              const _mProf = document.getElementById('mobileUserProfile');
+              const _mLogout = document.getElementById('mobileLogoutBtn');
+              const _hSearch = document.getElementById('headerSearchContainer');
+              if (_prof) _prof.style.display = 'flex';
+              if (_login) _login.style.display = 'none';
+              if (_mLogin) _mLogin.style.display = 'none';
+              if (_mProf) _mProf.style.display = 'flex';
+              if (_mLogout) _mLogout.style.display = 'flex';
+              if (_hSearch) _hSearch.style.display = 'block';
+              const _aim = document.getElementById('userAvatarImg');
+              const _aii = document.getElementById('userAvatarInitial');
+              const _hn  = document.getElementById('headerUserNameShort');
+              const _mun = document.getElementById('mobileUserName');
+              if (_ud.photoURL && _aim) {
+                _aim.src = _ud.photoURL; _aim.style.display = 'block';
+                if (_aii) _aii.style.display = 'none';
+              } else if (_aii) {
+                _aii.style.display = 'block';
+                _aii.textContent = (_ud.displayName || 'U')[0].toUpperCase();
+                if (_aim) _aim.style.display = 'none';
+              }
+              if (_hn) {
+                const sn = (_ud.displayName || 'User').split(' ')[0];
+                _hn.textContent = sn.length > 10 ? sn.substring(0, 10) + '...' : sn;
+              }
+              if (_mun && _ud.displayName) {
+                _mun.textContent = _ud.displayName;
+              }
+            }
+          } catch(e) {}
+
+          // 3. Render Categories
+          try {
+            const cachedCats = getCached('bz_categories');
+            if (cachedCats && cachedCats.length > 0) {
+              const container = document.getElementById('categoryCirclesContainer');
+              if (container) {
+                container.innerHTML = cachedCats.slice(0, 15).map(cat => `
+                  <div class="category-circle">
+                    <div class="category-circle-image" style="background-image: url('${getProductImg(cat)}')"></div>
+                    <div class="category-circle-name">${cat.name || 'Category'}</div>
+                  </div>
+                `).join('');
+              }
+            }
+          } catch(e) {}
+
+          // 4. Render Banners
+          try {
+            const cachedBans = getCached('bz_banners');
+            if (cachedBans && cachedBans.length > 0) {
+              const track = document.getElementById('bannerTrack');
+              const controls = document.getElementById('bannerControls');
+              const carousel = document.getElementById('bannerCarousel');
+              if (track && controls) {
+                track.innerHTML = cachedBans.map(banner => `
+                  <div class="banner-slide" style="background-image: url('${getProductImg(banner)}'); background-size: cover; background-position: center;${banner.link ? 'cursor:pointer;' : ''}"></div>
+                `).join('');
+                controls.innerHTML = cachedBans.map((_, idx) => `
+                  <div class="banner-dot ${idx === 0 ? 'active' : ''}"></div>
+                `).join('');
+                if (carousel) carousel.classList.remove('skeleton');
+              }
+            }
+          } catch(e) {}
+
+          // 5. Render Products (Instant first viewport products)
+          try {
+            const cachedProds = getCached('bz_products');
+            if (cachedProds && cachedProds.length > 0) {
+              const container = document.getElementById('homeProductGrid');
+              if (container) {
+                const toRender = cachedProds.slice(0, 20);
+                container.innerHTML = toRender.map(product => {
+                  const productId = product.id || 'p_' + Math.random().toString(36).substring(2, 7);
+                  const priceFormatted = typeof product.price === 'number' ? '₹' + product.price.toLocaleString('en-IN') : '₹' + (product.price || 0);
+                  const originalPriceFormatted = product.originalPrice ? (typeof product.originalPrice === 'number' ? '₹' + product.originalPrice.toLocaleString('en-IN') : '₹' + product.originalPrice) : '';
+                  const isFeatured = product.isFeatured || product.featured || false;
+                  const isTrending = product.isTrending || product.trending || false;
+                  const badge = product.badge || product.tag || '';
+                  let badgeHtml = '';
+                  if (isFeatured) {
+                    badgeHtml = `<div class="professional-badge" style="background:#22c55e;">FEATURED</div>`;
+                  } else if (isTrending) {
+                    badgeHtml = `<div class="professional-badge">TRENDING</div>`;
+                  } else if (badge && !(/^\d{3}[A-Z]{3}$/.test(badge))) {
+                    badgeHtml = `<div class="product-card-badge">${badge}</div>`;
+                  }
+                  const stars = '★'.repeat(5);
+
+                  return `
+                    <div class="product-card" data-product-id="${productId}">
+                      <div class="product-card-image" style="background-image: url('${getProductImg(product)}');position:relative;">
+                        ${badgeHtml}
+                      </div>
+                      <div class="product-card-body">
+                        <div class="product-card-title">${product.name || product.title || 'Product'}</div>
+                        <div class="product-card-rating">
+                          <div class="product-card-stars">${stars}</div>
+                          <div class="product-card-review-count">(${product.reviewCount || '0'})</div>
+                        </div>
+                        <div class="product-card-price">
+                          <div class="product-card-current-price">${priceFormatted}</div>
+                          ${originalPriceFormatted ? `<div class="product-card-original-price">${originalPriceFormatted}</div>` : ''}
+                        </div>
+                        <div class="product-card-actions">
+                          <button class="action-btn wishlist-btn" data-product-id="${productId}">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                            </svg>
+                          </button>
+                          <div style="flex:1"></div>
+                          <button class="action-btn share-btn" data-product-id="${productId}">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                              <circle cx="18" cy="5" r="3"></circle>
+                              <circle cx="6" cy="12" r="3"></circle>
+                              <circle cx="18" cy="19" r="3"></circle>
+                              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  `;
+                }).join('');
+              }
+            }
+          } catch(e) {}
+        })();
+      </script>
 
       <!-- Grid 2: next 20 products — 3-col mini style -->
       <div id="homeProductGrid2Wrap" style="display:none;margin-top:4px;">
@@ -2182,7 +2385,8 @@
   </div>
 
 
-  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script type="module">
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js" defer></script>
+  <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
     import { getDatabase, ref, set, get, update, remove, onValue, query, orderByChild, equalTo, push, limitToLast } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-database.js";
     import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js";
@@ -2205,7 +2409,7 @@
     
   </script>
 
-  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js" defer></script>
 
   <script src="security.js" defer></script>
 
