@@ -2469,11 +2469,6 @@
       }
     })();
 
-    window.addEventListener('scroll', function() {
-      const btn = document.getElementById('backToTop');
-      if (btn) btn.classList.toggle('show', window.scrollY > 400);
-    }, { passive: true });
-
     (function() {
       if (!localStorage.getItem('bz_cookie_consent')) {
         setTimeout(() => {
@@ -2490,14 +2485,6 @@
       localStorage.setItem('bz_cookie_consent', 'declined');
       document.getElementById('cookieBanner').classList.remove('show');
     }
-
-    window.addEventListener('scroll', function() {
-      const bar = document.getElementById('progressBar');
-      if (!bar) return;
-      const h = document.documentElement;
-      const pct = (h.scrollTop / (h.scrollHeight - h.clientHeight)) * 100;
-      bar.style.width = pct + '%';
-    }, { passive: true });
 
     function selectCancelReason(value, element) {
       document.querySelectorAll('#cancellationModal .cancellation-reason').forEach(el => el.classList.remove('selected'));
@@ -2626,9 +2613,6 @@
     (function(){
       var btn = document.getElementById('scrollTopBtn');
       if (!btn) return;
-      window.addEventListener('scroll', function(){
-        btn.style.display = window.scrollY > 400 ? 'flex' : 'none';
-      }, { passive: true });
       btn.addEventListener('click', function(){
         window.scrollTo({ top: 0, behavior: 'smooth' });
       });
