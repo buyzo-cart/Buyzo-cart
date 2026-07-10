@@ -5421,10 +5421,11 @@
     }
 
     function _fetchFromFirebase(database, ref, get, forceRefresh) {
-      // ── PRODUCTS: Cache check pehle ──────────────────────────
+      const promises = {};
+
+      // ── PRODUCTS: Cache check ──
       const cachedProds = forceRefresh ? null : _bzCacheGet(CACHE_KEYS.PRODUCTS, _BZ_TTL.PRODUCTS);
       if (cachedProds && cachedProds.length > 0) {
-        // Cache hit → zero Firebase read
         products = cachedProds;
         window.products = products;
         const cp = document.querySelector('.page.active')?.id;
@@ -5437,9 +5438,65 @@
           const r = searchProducts(window.currentSearchQuery); window.currentSearchResults = r; renderSearchResults(r, window.currentSearchQuery);
         }
       } else {
-        // Cache miss → fetch once with get() (NOT onValue)
-        get(ref(database, 'products')).then(snapshot => {
-          const productsObj = snapshot.val();
+        promises.products = get(ref(database, 'products'));
+      }
+
+      // ── PRODUCT STATS ──
+      if (!sessionStorage.getItem('bz_pstats_loaded')) {
+        promises.productStats = get(ref(database, 'productStats'));
+      }
+
+      // ── CATEGORIES: Cache check ──
+      const cachedCats = forceRefresh ? null : _bzCacheGet(CACHE_KEYS.CATEGORIES, _BZ_TTL.CATEGORIES);
+      if (cachedCats && cachedCats.length > 0) {
+        categories = cachedCats;
+        if (document.getElementById('homePage')?.classList.contains('active') || document.getElementById('productsPage')?.classList.contains('active')) {
+          renderCategories(); renderCategoryCircles();
+        }
+      } else {
+        promises.categories = get(ref(database, 'categories'));
+      }
+
+      // ── BANNERS: Cache check ──
+      const cachedBan = forceRefresh ? null : _bzCacheGet(CACHE_KEYS.BANNERS, _BZ_TTL.BANNERS);
+      if (cachedBan && cachedBan.length > 0) {
+        banners = cachedBan;
+        if (document.getElementById('homePage')?.classList.contains('active')) renderBannerCarousel();
+      } else {
+        promises.banners = get(ref(database, 'banners'));
+      }
+
+      // ── ADMIN SETTINGS ──
+      const cachedSet = forceRefresh ? null : _bzCacheGet(CACHE_KEYS.SETTINGS, _BZ_TTL.SETTINGS);
+      if (cachedSet) {
+        adminSettings = { ...adminSettings, ...cachedSet }; updateAdminSettingsUI();
+      } else {
+        promises.adminSettings = get(ref(database, 'adminSettings'));
+      }
+
+      // ── OUT OF STOCK ──
+      if (!sessionStorage.getItem('bz_oos_loaded')) {
+        promises.outOfStock = get(ref(database, 'outOfStock'));
+      }
+
+      // ── BRANDS ──
+      if (!sessionStorage.getItem('bz_brands_loaded')) {
+        promises.brands = get(ref(database, 'brands'));
+      }
+
+      const keys = Object.keys(promises);
+      if (keys.length === 0) return;
+
+      Promise.all(Object.values(promises)).then(results => {
+        const data = {};
+        keys.forEach((key, idx) => {
+          if (results[idx]) {
+            data[key] = typeof results[idx].val === 'function' ? results[idx].val() : results[idx];
+          }
+        });
+
+        if (data.products) {
+          const productsObj = data.products;
           if (productsObj) {
             const newProducts = Object.keys(productsObj).map(key => {
               const product = productsObj[key];
@@ -5452,7 +5509,7 @@
             });
             products = newProducts;
             window.products = products;
-            _bzCacheSet(CACHE_KEYS.PRODUCTS, products); // Cache mein save karo
+            _bzCacheSet(CACHE_KEYS.PRODUCTS, products);
             const currentPage = document.querySelector('.page.active')?.id;
             if (currentPage === 'homePage') {
               renderProducts(products, 'homeProductGrid');
@@ -5465,88 +5522,61 @@
               const filteredResults = searchProducts(window.currentSearchQuery);
               window.currentSearchResults = filteredResults; renderSearchResults(filteredResults, window.currentSearchQuery);
             }
-          } else { products = []; renderProducts([], 'homeProductGrid'); renderProducts([], 'productGrid'); }
-        }).catch(error => {
-          console.error('Error fetching products:', error);
-          products = []; renderProducts([], 'homeProductGrid'); renderProducts([], 'productGrid');
-        });
-      }
-
-      // ── PRODUCT STATS: Session cache (ek baar per session) ───
-      if (!sessionStorage.getItem('bz_pstats_loaded')) {
-        get(ref(database, 'productStats')).then(snap => {
-          if (snap.exists()) { window._productStats = snap.val(); sessionStorage.setItem('bz_pstats_loaded', '1'); }
-        }).catch(() => {});
-      }
-
-      // ── CATEGORIES: TTL cache ────────────────────────────────
-      const cachedCats = forceRefresh ? null : _bzCacheGet(CACHE_KEYS.CATEGORIES, _BZ_TTL.CATEGORIES);
-      if (cachedCats && cachedCats.length > 0) {
-        categories = cachedCats;
-        if (document.getElementById('homePage')?.classList.contains('active') || document.getElementById('productsPage')?.classList.contains('active')) {
-          renderCategories(); renderCategoryCircles();
+          } else {
+            products = []; renderProducts([], 'homeProductGrid'); renderProducts([], 'productGrid');
+          }
         }
-      } else {
-        get(ref(database, 'categories')).then(snapshot => {
-          const categoriesObj = snapshot.val();
+
+        if (data.productStats) {
+          window._productStats = data.productStats;
+          sessionStorage.setItem('bz_pstats_loaded', '1');
+        }
+
+        if (data.categories) {
+          const categoriesObj = data.categories;
           if (categoriesObj) {
             categories = Object.keys(categoriesObj).map(key => ({ id: key, ...categoriesObj[key] }));
             _bzCacheSet(CACHE_KEYS.CATEGORIES, categories);
             if (document.getElementById('homePage')?.classList.contains('active') || document.getElementById('productsPage')?.classList.contains('active')) {
               renderCategories(); renderCategoryCircles();
             }
-          } else categories = [];
-        }).catch(() => { categories = []; });
-      }
+          } else {
+            categories = [];
+          }
+        }
 
-      // ── BANNERS: TTL cache ───────────────────────────────────
-      const cachedBan = forceRefresh ? null : _bzCacheGet(CACHE_KEYS.BANNERS, _BZ_TTL.BANNERS);
-      if (cachedBan && cachedBan.length > 0) {
-        banners = cachedBan;
-        if (document.getElementById('homePage')?.classList.contains('active')) renderBannerCarousel();
-      } else {
-        get(ref(database, 'banners')).then(snapshot => {
-          const bannersObj = snapshot.val();
+        if (data.banners) {
+          const bannersObj = data.banners;
           if (bannersObj) {
             banners = Object.keys(bannersObj).map(key => ({ id: key, ...bannersObj[key] }));
             _bzCacheSet(CACHE_KEYS.BANNERS, banners);
             if (document.getElementById('homePage')?.classList.contains('active')) renderBannerCarousel();
-          } else banners = [];
-        }).catch(() => { banners = []; });
-      }
-
-      // ── ADMIN SETTINGS: TTL cache ────────────────────────────
-      const cachedSet = forceRefresh ? null : _bzCacheGet(CACHE_KEYS.SETTINGS, _BZ_TTL.SETTINGS);
-      if (cachedSet) {
-        adminSettings = { ...adminSettings, ...cachedSet }; updateAdminSettingsUI();
-      } else {
-        get(ref(database, 'adminSettings')).then(snapshot => {
-          const settingsObj = snapshot.val();
-          if (settingsObj) {
-            adminSettings = { ...adminSettings, ...settingsObj };
-            _bzCacheSet(CACHE_KEYS.SETTINGS, adminSettings); updateAdminSettingsUI();
+          } else {
+            banners = [];
           }
-        }).catch(() => {});
-      }
+        }
 
-      // ── OUT OF STOCK: Session cache ──────────────────────────
-      if (!sessionStorage.getItem('bz_oos_loaded')) {
-        get(ref(database, 'outOfStock')).then(snapshot => {
-          const outOfStockObj = snapshot.val();
-          if (outOfStockObj) { window.outOfStockItems = outOfStockObj; sessionStorage.setItem('bz_oos_loaded', '1'); }
-        }).catch(() => {});
-      }
+        if (data.adminSettings) {
+          adminSettings = { ...adminSettings, ...data.adminSettings };
+          _bzCacheSet(CACHE_KEYS.SETTINGS, adminSettings); updateAdminSettingsUI();
+        }
 
-      // ── BRANDS: Session cache ────────────────────────────────
-      if (!sessionStorage.getItem('bz_brands_loaded')) {
-        get(ref(database, 'brands')).then(snap => {
+        if (data.outOfStock) {
+          window.outOfStockItems = data.outOfStock;
+          sessionStorage.setItem('bz_oos_loaded', '1');
+        }
+
+        if (data.brands) {
           window._brandsData = {};
-          if (snap.exists()) {
-            snap.forEach(child => { window._brandsData[child.key] = child.val(); });
+          const brandsObj = data.brands;
+          if (brandsObj) {
+            Object.keys(brandsObj).forEach(k => { window._brandsData[k] = brandsObj[k]; });
             sessionStorage.setItem('bz_brands_loaded', '1');
           }
-        }).catch(() => {});
-      }
+        }
+      }).catch(error => {
+        console.error('Error fetching data from Firebase:', error);
+      });
     }
 
     function loadCachedData() {
