@@ -3,19 +3,6 @@
  * Securely verifies Razorpay payment signature on the backend.
  *
  * Secure Backend Integration: NEVER expose your Razorpay Secret Key in frontend code.
- *
- * =================================================================================
- * CONFIGURATION INSTRUCTIONS FOR WEBSITE OWNER:
- *
- * Option A (Recommended & Secure):
- *   Set the following environment variables in your Netlify Dashboard (Site Settings > Environment Variables):
- *   - RAZORPAY_KEY_SECRET: Your Razorpay API Secret Key (e.g., xxxxxxxxxxxxxxxxxxxxxxxx)
- *   - RAZORPAY_WEBHOOK_SECRET: Your Razorpay Webhook Secret (if using Webhooks, e.g., secret123)
- *
- * Option B (Manual Placeholders):
- *   If not using environment variables, replace the empty strings in the placeholders below
- *   with your actual credentials.
- * =================================================================================
  */
 
 // PLACEHOLDERS FOR WEBSITE OWNER:
@@ -23,6 +10,7 @@ const RAZORPAY_KEY_SECRET_PLACEHOLDER = "";    // <-- ADD YOUR RAZORPAY KEY SECR
 const RAZORPAY_WEBHOOK_SECRET_PLACEHOLDER = ""; // <-- ADD YOUR RAZORPAY WEBHOOK SECRET HERE (IF USING WEBHOOKS)
 
 const crypto = require('crypto');
+const { getVaultConfig, sendEmail, getPaymentSuccessTemplate, getPaymentFailedTemplate, getOwnerNotificationTemplate } = require('./utils/email');
 
 exports.handler = async function(event, context) {
   // Allow OPTIONS request for CORS if accessed across domains
@@ -51,11 +39,29 @@ exports.handler = async function(event, context) {
 
   try {
     const body = JSON.parse(event.body || "{}");
-    const { razorpay_payment_id, razorpay_order_id, razorpay_signature } = body;
+    const { razorpay_payment_id, razorpay_order_id, razorpay_signature, order_id, userEmail, amount } = body;
+
+    // Load configs from Owner Vault
+    let keySecret = RAZORPAY_KEY_SECRET_PLACEHOLDER;
+    let webhookSecret = RAZORPAY_WEBHOOK_SECRET_PLACEHOLDER;
+    let vaultConfig = null;
+
+    try {
+      vaultConfig = await getVaultConfig();
+      if (vaultConfig && vaultConfig.payment) {
+        if (vaultConfig.payment.razorpayKeySecret) keySecret = vaultConfig.payment.razorpayKeySecret;
+        if (vaultConfig.payment.razorpayWebhookSecret) webhookSecret = vaultConfig.payment.razorpayWebhookSecret;
+      }
+    } catch (e) {
+      console.error("[Razorpay Verification] Failed to load config from Owner Vault:", e);
+    }
+
+    // Environment variables override database configs
+    keySecret = process.env.RAZORPAY_KEY_SECRET || keySecret;
+    webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET || webhookSecret;
 
     // Check if this is a standard payment verification request
     if (razorpay_payment_id && razorpay_order_id && razorpay_signature) {
-      const keySecret = process.env.RAZORPAY_KEY_SECRET || RAZORPAY_KEY_SECRET_PLACEHOLDER;
 
       if (!keySecret) {
         console.error("[Razorpay Verification] API Secret Key is missing.");
@@ -82,6 +88,42 @@ exports.handler = async function(event, context) {
       const isVerified = generatedSignature === razorpay_signature;
 
       if (isVerified) {
+        // Trigger customer payment success email & owner notification
+        if (userEmail && amount) {
+          try {
+            const customerHtml = getPaymentSuccessTemplate({
+              paymentId: razorpay_payment_id,
+              razorpayOrderId: razorpay_order_id,
+              amount: parseFloat(amount),
+              paymentMethod: "prepaid",
+              transactionTime: new Date().toLocaleString('en-IN')
+            });
+            await sendEmail({
+              to: userEmail,
+              subject: "Payment Verified Successfully - Buyzo Cart",
+              html: customerHtml,
+              text: `Payment of ₹${amount} received successfully. Transaction ID: ${razorpay_payment_id}.`
+            });
+
+            // Owner Alert
+            const ownerEmail = (vaultConfig && vaultConfig.email && vaultConfig.email.receiverEmail) || process.env.SENDER_EMAIL || "buyzocartshop@gmail.com";
+            const ownerHtml = getOwnerNotificationTemplate("payment_success", {
+              paymentId: razorpay_payment_id,
+              orderId: order_id || "N/A",
+              amount: parseFloat(amount),
+              time: new Date().toLocaleString('en-IN')
+            });
+            await sendEmail({
+              to: ownerEmail,
+              subject: `💸 Payment Verified: ₹${amount}`,
+              html: ownerHtml,
+              text: `A prepaid payment of ₹${amount} was verified. Transaction ID: ${razorpay_payment_id}.`
+            });
+          } catch (mailErr) {
+            console.error("[Razorpay Verification] Failed to send success notifications:", mailErr);
+          }
+        }
+
         return {
           statusCode: 200,
           headers: {
@@ -95,6 +137,41 @@ exports.handler = async function(event, context) {
         };
       } else {
         console.warn("[Razorpay Verification Failed] Expected: " + generatedSignature + ", Received: " + razorpay_signature);
+
+        // Trigger payment failed notification
+        if (userEmail && amount) {
+          try {
+            const customerHtml = getPaymentFailedTemplate({
+              razorpayOrderId: razorpay_order_id,
+              amount: parseFloat(amount),
+              transactionTime: new Date().toLocaleString('en-IN'),
+              error: "Invalid transaction signature mismatch."
+            });
+            await sendEmail({
+              to: userEmail,
+              subject: "Payment Attempt Failed - Buyzo Cart",
+              html: customerHtml,
+              text: `Your payment of ₹${amount} failed signature verification.`
+            });
+
+            // Owner Notification
+            const ownerEmail = (vaultConfig && vaultConfig.email && vaultConfig.email.receiverEmail) || process.env.SENDER_EMAIL || "buyzocartshop@gmail.com";
+            const ownerHtml = getOwnerNotificationTemplate("payment_failed", {
+              razorpayOrderId: razorpay_order_id,
+              amount: parseFloat(amount),
+              error: "Signature mismatch verification failure."
+            });
+            await sendEmail({
+              to: ownerEmail,
+              subject: "⚠️ Alert: Payment Attempt Failed",
+              html: ownerHtml,
+              text: `Payment verification failed for Razorpay Order: ${razorpay_order_id}.`
+            });
+          } catch (mailErr) {
+            console.error("[Razorpay Verification] Failed to send failure notifications:", mailErr);
+          }
+        }
+
         return {
           statusCode: 400,
           headers: {
@@ -109,12 +186,9 @@ exports.handler = async function(event, context) {
       }
     }
 
-    // WEBHOOK INTEGRATION PLACEHOLDER:
-    // If the request is coming from a Razorpay Webhook instead, verify it using the webhook secret
+    // WEBHOOK INTEGRATION:
     const razorpayWebhookSignature = event.headers['x-razorpay-signature'];
     if (razorpayWebhookSignature) {
-      const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET || RAZORPAY_WEBHOOK_SECRET_PLACEHOLDER;
-
       if (!webhookSecret) {
         console.error("[Razorpay Webhook] Webhook Secret is missing.");
         return {

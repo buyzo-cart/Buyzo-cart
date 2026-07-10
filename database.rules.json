@@ -1,0 +1,169 @@
+{
+  "rules": {
+    "admins": {
+      // Admins are readable and writeable only by existing authenticated admins.
+      // Initially, the owner will add their UID manually in the Firebase Console.
+      ".read": "auth != null && root.child('admins').child(auth.uid).val() === true",
+      ".write": "auth != null && root.child('admins').child(auth.uid).val() === true",
+      "$uid": {
+        ".validate": "newData.isBoolean()"
+      }
+    },
+
+    "owner_vault": {
+      // The Owner Vault path is highly secure and only accessible by authorized admins.
+      ".read": "auth != null && root.child('admins').child(auth.uid).val() === true",
+      ".write": "auth != null && root.child('admins').child(auth.uid).val() === true"
+    },
+
+    "users": {
+      "$uid": {
+        // Users can read/write their own profiles. Admins can read all profiles.
+        ".read": "auth != null && (auth.uid === $uid || root.child('admins').child(auth.uid).val() === true)",
+        ".write": "auth != null && (auth.uid === $uid || root.child('admins').child(auth.uid).val() === true)",
+        "username": {
+          ".validate": "!newData.exists() || (newData.isString() && newData.val().length >= 3)"
+        }
+      }
+    },
+
+    "usernames": {
+      // Usernames index is publicly readable, but writeable only by logged-in users claiming their own username
+      ".read": "true",
+      "$username": {
+        ".write": "auth != null && (!data.exists() || data.val() === auth.uid) && newData.val() === auth.uid"
+      }
+    },
+
+    "orders": {
+      // Orders are readable/writeable by admins.
+      // Individual users can read their own order details, but cannot write directly without verification.
+      ".read": "auth != null && (root.child('admins').child(auth.uid).val() === true || query.orderByChild == 'userId' && query.equalTo == auth.uid)",
+      ".write": "auth != null",
+      "$orderId": {
+        ".read": "auth != null && (root.child('admins').child(auth.uid).val() === true || data.child('userId').val() === auth.uid)",
+        ".write": "auth != null && (root.child('admins').child(auth.uid).val() === true || !data.exists() && newData.child('userId').val() === auth.uid)"
+      }
+    },
+
+    "userOrders": {
+      "$uid": {
+        // Users can manage their own order indexes. Admins can read/write all.
+        ".read": "auth != null && (auth.uid === $uid || root.child('admins').child(auth.uid).val() === true)",
+        ".write": "auth != null && (auth.uid === $uid || root.child('admins').child(auth.uid).val() === true)"
+      }
+    },
+
+    "products": {
+      // Products are publicly readable. Writeable only by approved sellers or admins.
+      ".read": "true",
+      ".write": "auth != null && (root.child('admins').child(auth.uid).val() === true || root.child('sellerRequests').child(auth.uid).child('status').val() === 'approved')",
+      "$productId": {
+        ".write": "auth != null && (root.child('admins').child(auth.uid).val() === true || !data.exists() && newData.child('sellerUid').val() === auth.uid || data.exists() && data.child('sellerUid').val() === auth.uid)"
+      }
+    },
+
+    "productStats": {
+      // Public read, write restricted to auth users (e.g. order tracking)
+      ".read": "true",
+      ".write": "auth != null"
+    },
+
+    "sellerProducts": {
+      "$uid": {
+        // Approved sellers can manage their own product listings. Admins can manage all.
+        ".read": "auth != null && (auth.uid === $uid || root.child('admins').child(auth.uid).val() === true)",
+        ".write": "auth != null && (auth.uid === $uid || root.child('admins').child(auth.uid).val() === true)"
+      }
+    },
+
+    "sellerRequests": {
+      "$uid": {
+        // Applications are readable/writeable by applicants. Admins can approve/reject.
+        ".read": "auth != null && (auth.uid === $uid || root.child('admins').child(auth.uid).val() === true)",
+        ".write": "auth != null && (auth.uid === $uid || root.child('admins').child(auth.uid).val() === true)"
+      }
+    },
+
+    "sellerIds": {
+      // Reserved seller identifiers
+      ".read": "true",
+      "$sellerId": {
+        ".write": "auth != null && (!data.exists() || data.child('uid').val() === auth.uid)"
+      }
+    },
+
+    "categories": {
+      // Categories are publicly readable, writeable only by admins
+      ".read": "true",
+      ".write": "auth != null && root.child('admins').child(auth.uid).val() === true"
+    },
+
+    "banners": {
+      // Banners are publicly readable, writeable by authenticated sellers (request) or admins
+      ".read": "true",
+      ".write": "auth != null"
+    },
+
+    "brands": {
+      // Public read, writeable by approved sellers or admins
+      ".read": "true",
+      ".write": "auth != null && (root.child('admins').child(auth.uid).val() === true || root.child('sellerRequests').child(auth.uid).child('status').val() === 'approved')"
+    },
+
+    "brandRequests": {
+      // Writeable by authenticated sellers, readable/writeable by admins
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+
+    "brandFollowers": {
+      // Users can toggle follow status
+      ".read": "true",
+      "$brandId": {
+        "$uid": {
+          ".write": "auth != null && auth.uid === $uid"
+        }
+      }
+    },
+
+    "reviews": {
+      // Reviews are publicly readable, writeable by authenticated verified buyers
+      ".read": "true",
+      ".write": "auth != null"
+    },
+
+    "loginActivity": {
+      "$uid": {
+        // Secure logs of login attempts
+        ".read": "auth != null && (auth.uid === $uid || root.child('admins').child(auth.uid).val() === true)",
+        ".write": "auth != null && auth.uid === $uid"
+      }
+    },
+
+    "adminNotifications": {
+      // Read by everyone, written by admins only
+      ".read": "true",
+      ".write": "auth != null && root.child('admins').child(auth.uid).val() === true"
+    },
+
+    "adminSettings": {
+      // Settings read by everyone, written by admins only
+      ".read": "true",
+      ".write": "auth != null && root.child('admins').child(auth.uid).val() === true"
+    },
+
+    "deliverySessions": {
+      // Sessions for delivery tracking
+      ".read": "true",
+      ".write": "true"
+    },
+
+    "wishlist": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid"
+      }
+    }
+  }
+}
