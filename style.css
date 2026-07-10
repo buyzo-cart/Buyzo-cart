@@ -1757,18 +1757,20 @@
     .mobile-menu {
       position: fixed;
       top: 0;
-      left: -280px;
+      left: 0;
       width: 280px;
       height: 100vh;
       background: var(--card);
       box-shadow: var(--shadow-hover);
       z-index: 1000;
-      transition: left 0.3s ease;
+      transform: translate3d(-280px, 0, 0);
+      transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
       overflow-y: auto;
+      will-change: transform;
     }
     
     .mobile-menu.active {
-      left: 0;
+      transform: translate3d(0, 0, 0);
     }
     
     .menu-header {
@@ -3643,16 +3645,19 @@
       bottom: 0;
       background: var(--card);
       z-index: 2000;
-      transform: translateY(-100%);
-      transition: transform 0.3s ease;
+      transform: translate3d(0, -100%, 0);
+      transition: transform 0.32s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.32s ease;
       overflow-y: auto;
       padding: 20px 16px;
       pointer-events: none;
       visibility: hidden;
+      opacity: 0;
+      will-change: transform, opacity;
     }
 
     .search-panel.active {
-      transform: translateY(0);
+      transform: translate3d(0, 0, 0);
+      opacity: 1;
       pointer-events: auto;
       visibility: visible;
     }
@@ -4242,13 +4247,13 @@
    ============================================================ */
 
 @keyframes bz-fadeSlideDown {
-  from { opacity: 0; transform: translateY(-12px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translate3d(0, -12px, 0); }
+  to   { opacity: 1; transform: translate3d(0, 0, 0); }
 }
 
 @keyframes bz-fadeSlideUp {
-  from { opacity: 0; transform: translateY(16px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translate3d(0, 16px, 0); }
+  to   { opacity: 1; transform: translate3d(0, 0, 0); }
 }
 
 @keyframes bz-scaleIn {
@@ -4269,8 +4274,8 @@
 }
 
 @keyframes bz-heroFloat {
-  0%,100% { transform: translateY(0px); }
-  50%      { transform: translateY(-5px); }
+  0%,100% { transform: translate3d(0, 0, 0); }
+  50%      { transform: translate3d(0, -5px, 0); }
 }
 
 @keyframes bz-badgePop {
@@ -4291,13 +4296,13 @@
 }
 
 @keyframes bz-slideInLeft {
-  from { opacity: 0; transform: translateX(-22px); }
-  to   { opacity: 1; transform: translateX(0); }
+  from { opacity: 0; transform: translate3d(-22px, 0, 0); }
+  to   { opacity: 1; transform: translate3d(0, 0, 0); }
 }
 
 @keyframes bz-slideInRight {
-  from { opacity: 0; transform: translateX(22px); }
-  to   { opacity: 1; transform: translateX(0); }
+  from { opacity: 0; transform: translate3d(22px, 0, 0); }
+  to   { opacity: 1; transform: translate3d(0, 0, 0); }
 }
 
 @keyframes bz-successPop {
@@ -4485,7 +4490,7 @@ header {
 
 /* Mobile menu */
 .mobile-menu.active {
-  animation: bz-slideInLeft 0.32s cubic-bezier(0.22,1,0.36,1) both;
+  /* Rely entirely on fast transform transition */
 }
 
 .mobile-menu.active .menu-item:nth-child(1)  { animation: bz-fadeSlideUp 0.28s 0.05s ease both; }
@@ -4633,7 +4638,7 @@ header {
 
 /* Search panel */
 .search-panel.active {
-  animation: bz-fadeSlideDown 0.3s cubic-bezier(0.22,1,0.36,1) both;
+  /* Handled elegantly by hardware-accelerated transform transition */
 }
 
 /* Category pills */

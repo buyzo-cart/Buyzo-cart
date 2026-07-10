@@ -194,8 +194,11 @@
       updateTransform(key) {
         const slider = this.sliders.get(key);
         if (!slider || !slider.track) return;
-        const slideWidth = slider.track.children[0]?.offsetWidth || 0;
-        slider.track.style.transform = `translateX(-${slider.currentIndex * slideWidth}px)`;
+        if (!slider.slideWidth) {
+          slider.slideWidth = slider.track.children[0]?.offsetWidth || 0;
+        }
+        slider.track.style.transform = `translate3d(-${slider.currentIndex * slider.slideWidth}px, 0, 0)`;
+        slider.track.style.transition = 'transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
       }
       setupDelegation() {
         document.addEventListener('touchstart', (e) => this.handleTouchStart(e), { passive: true });
@@ -204,6 +207,17 @@
         document.addEventListener('mousedown', (e) => this.handleMouseDown(e));
         document.addEventListener('mousemove', (e) => this.handleMouseMove(e));
         document.addEventListener('mouseup', (e) => this.handleMouseUp(e));
+
+        let resizeTimeout;
+        window.addEventListener('resize', () => {
+          if (resizeTimeout) return;
+          resizeTimeout = setTimeout(() => {
+            this.sliders.forEach(slider => {
+              slider.slideWidth = null;
+            });
+            resizeTimeout = null;
+          }, 150);
+        }, { passive: true });
       }
       handleTouchStart(e) {
         const target = e.target.closest('[data-slider-key]');
@@ -1493,7 +1507,7 @@
       const _cardBrandLogo = product.brandLogo || product.brandIcon || '';
       const _cardBrandVerified = !!(product.blueTickAdmin);
       const _BT_CARD = _cardBrandVerified ? (window.__BZ_BLUE_TICK || '<span style="display:inline-flex;align-items:center;justify-content:center;width:12px;height:12px;background:#2563eb;border-radius:50%;margin-left:2px;"><svg viewBox=\"0 0 24 24\" fill=\"none\" width=\"7\" height=\"7\"><path d=\"M20 6L9 17l-5-5\" stroke=\"#fff\" stroke-width=\"3\" stroke-linecap=\"round\"/></svg></span>') : '';
-      const _brandOverlay = product.brand ? `<div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(to top,rgba(0,0,0,.62) 0%,transparent 100%);padding:8px 8px 7px;display:flex;align-items:center;gap:5px;pointer-events:none;" title="View Brand"><div onclick="event.stopPropagation();showBrandProfile('${_cardBrandId}','${_cardBrandName}');" style="display:flex;align-items:center;gap:5px;cursor:pointer;pointer-events:auto;">${_cardBrandLogo ? `<img src="${_cardBrandLogo}" style="width:18px;height:18px;border-radius:4px;object-fit:cover;border:1px solid rgba(255,255,255,.4);flex-shrink:0;" onerror="this.style.display='none'">` : ''}<span style="font-size:11px;font-weight:700;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.5);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:calc(100% - 40px);">${product.brand}</span>${_BT_CARD}</div></div>` : '';
+      const _brandOverlay = product.brand ? `<div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(to top,rgba(0,0,0,.62) 0%,transparent 100%);padding:8px 8px 7px;display:flex;align-items:center;gap:5px;pointer-events:none;" title="View Brand"><div onclick="event.stopPropagation();showBrandProfile('${_cardBrandId}','${_cardBrandName}');" style="display:flex;align-items:center;gap:5px;cursor:pointer;pointer-events:auto;">${_cardBrandLogo ? `<img src="${_cardBrandLogo}" loading="lazy" style="width:18px;height:18px;border-radius:4px;object-fit:cover;border:1px solid rgba(255,255,255,.4);flex-shrink:0;" onerror="this.style.display='none'">` : ''}<span style="font-size:11px;font-weight:700;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.5);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:calc(100% - 40px);">${product.brand}</span>${_BT_CARD}</div></div>` : '';
       const _cardImages = getProductImages(product);
       card.innerHTML = `
         <div class="product-card-image" style="background-image: url('${productImage}');position:relative;">
@@ -5666,12 +5680,7 @@
     }
 
     function setupHeaderSearchScroll() {
-      const headerSearchContainer = document.getElementById('headerSearchContainer');
-      if (!headerSearchContainer) return;
-      window.addEventListener('scroll', function() {
-        headerSearchContainer.style.opacity = '1';
-        headerSearchContainer.style.visibility = 'visible';
-      }, false);
+      // Handled by the high-performance unified scroll coordinator
     }
 
     function setupBackButton() {
@@ -6820,13 +6829,68 @@
       `;
       document.head.appendChild(style);
 
-      let scrollRAF = null;
-      window.addEventListener('scroll', () => {
-        if (scrollRAF) return;
-        scrollRAF = requestAnimationFrame(() => {
-          scrollRAF = null;
-        });
-      }, { passive: true });
+      // Single high-performance unified scroll coordinator
+      (function() {
+        let scrollRAF = null;
+        let lastScrollY = 0;
+
+        let backToTopBtn = null;
+        let scrollTopBtn = null;
+        let progressBar = null;
+        let headerSearchContainer = null;
+
+        function updateScrollElements() {
+          const sy = window.scrollY || window.pageYOffset;
+
+          if (!backToTopBtn) backToTopBtn = document.getElementById('backToTop');
+          if (!scrollTopBtn) scrollTopBtn = document.getElementById('scrollTopBtn');
+
+          if (backToTopBtn) {
+            backToTopBtn.classList.toggle('show', sy > 400);
+          }
+          if (scrollTopBtn) {
+            scrollTopBtn.style.display = sy > 400 ? 'flex' : 'none';
+          }
+
+          if (!progressBar) progressBar = document.getElementById('progressBar');
+          if (progressBar) {
+            const h = document.documentElement;
+            const totalScroll = h.scrollHeight - h.clientHeight;
+            const pct = totalScroll > 0 ? (h.scrollTop / totalScroll) * 100 : 0;
+            progressBar.style.width = pct + '%';
+          }
+
+          if (!headerSearchContainer) headerSearchContainer = document.getElementById('headerSearchContainer');
+          if (headerSearchContainer) {
+            headerSearchContainer.style.opacity = '1';
+            headerSearchContainer.style.visibility = 'visible';
+          }
+
+          const page = document.getElementById('brandProfilePage');
+          if (page && page.classList.contains('active') && page._bpScrollCb) {
+            page._bpScrollCb();
+          }
+        }
+
+        window.addEventListener('scroll', function() {
+          lastScrollY = window.scrollY || window.pageYOffset;
+          if (!scrollRAF) {
+            scrollRAF = requestAnimationFrame(() => {
+              updateScrollElements();
+              scrollRAF = null;
+            });
+          }
+        }, { passive: true });
+
+        window.bzTriggerScrollUpdate = function() {
+          if (!scrollRAF) {
+            scrollRAF = requestAnimationFrame(() => {
+              updateScrollElements();
+              scrollRAF = null;
+            });
+          }
+        };
+      })();
     })();
 
     function openAccountPage() {
@@ -8657,8 +8721,7 @@
             if (!stickyBar) return;
             stickyBar.style.display = window.scrollY > bpActionTop + 60 ? 'block' : 'none';
           }
-          window.addEventListener('scroll', onScroll, {passive:true});
-          // Clean up on page change
+          // Clean up on page change & registered in high-performance scroll coordinator
           page._bpScrollCb = onScroll;
         }, 400);
 
