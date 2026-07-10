@@ -1,30 +1,22 @@
-127.0.0.1 - - [10/Jul/2026 06:07:43] "GET / HTTP/1.1" 200 -
-127.0.0.1 - - [10/Jul/2026 06:07:43] "GET /style.css HTTP/1.1" 200 -
-127.0.0.1 - - [10/Jul/2026 06:07:43] "GET /config.js HTTP/1.1" 200 -
-127.0.0.1 - - [10/Jul/2026 06:07:44] code 404, message File not found
-127.0.0.1 - - [10/Jul/2026 06:07:44] "GET /cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js HTTP/1.1" 404 -
-127.0.0.1 - - [10/Jul/2026 06:07:44] "GET /security.js HTTP/1.1" 200 -
-127.0.0.1 - - [10/Jul/2026 06:07:44] "GET /main.js HTTP/1.1" 200 -
-127.0.0.1 - - [10/Jul/2026 06:10:08] "GET / HTTP/1.1" 200 -
-127.0.0.1 - - [10/Jul/2026 06:10:08] "GET /style.css HTTP/1.1" 200 -
-127.0.0.1 - - [10/Jul/2026 06:10:08] "GET /config.js HTTP/1.1" 200 -
-127.0.0.1 - - [10/Jul/2026 06:10:08] code 404, message File not found
-127.0.0.1 - - [10/Jul/2026 06:10:08] "GET /cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js HTTP/1.1" 404 -
-127.0.0.1 - - [10/Jul/2026 06:10:08] "GET /main.js HTTP/1.1" 200 -
-127.0.0.1 - - [10/Jul/2026 06:10:08] "GET /security.js HTTP/1.1" 200 -
-127.0.0.1 - - [10/Jul/2026 06:12:04] "GET / HTTP/1.1" 200 -
-127.0.0.1 - - [10/Jul/2026 06:12:04] "GET /style.css HTTP/1.1" 200 -
-127.0.0.1 - - [10/Jul/2026 06:12:04] "GET /config.js HTTP/1.1" 200 -
-127.0.0.1 - - [10/Jul/2026 06:12:04] code 404, message File not found
-127.0.0.1 - - [10/Jul/2026 06:12:04] "GET /cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js HTTP/1.1" 404 -
-127.0.0.1 - - [10/Jul/2026 06:12:04] "GET /security.js HTTP/1.1" 200 -
-127.0.0.1 - - [10/Jul/2026 06:12:04] "GET /main.js HTTP/1.1" 200 -
-127.0.0.1 - - [10/Jul/2026 06:13:43] "GET / HTTP/1.1" 200 -
-127.0.0.1 - - [10/Jul/2026 06:13:43] "GET /style.css HTTP/1.1" 200 -
-127.0.0.1 - - [10/Jul/2026 06:13:43] "GET /config.js HTTP/1.1" 200 -
-127.0.0.1 - - [10/Jul/2026 06:13:43] "GET /security.js HTTP/1.1" 200 -
-127.0.0.1 - - [10/Jul/2026 06:13:43] "GET /main.js HTTP/1.1" 200 -
-127.0.0.1 - - [10/Jul/2026 06:13:43] code 404, message File not found
-127.0.0.1 - - [10/Jul/2026 06:13:43] "GET /cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js HTTP/1.1" 404 -
-127.0.0.1 - - [10/Jul/2026 06:13:43] code 404, message File not found
-127.0.0.1 - - [10/Jul/2026 06:13:43] "GET /data/store-data.json?v=82577 HTTP/1.1" 404 -
+⬥ Injecting environment variable values for all scopes
+⬥ Ignored general context env var: LANG (defined in process)
+⬥ No app server detected. Using simple static server
+⬥ Unable to determine public folder to serve files from. Using current working directory
+⬥ Setup a netlify.toml file with a [dev] section to specify your dev server settings.
+⬥ See docs at: https://docs.netlify.com/cli/local-development/#project-detection
+⬥ Running static server from "app"
+⬥ Setting up local dev server
+
+⬥ Static server listening to 3999
+⬥ Loaded function verify-payment
+⬥ Loaded function create-order
+⠋ Setting up the Edge Functions environment. This may take a couple of minutes.
+
+   ╭─────────────────────── ⬥  ────────────────────────╮
+   │                                                   │
+   │   Local dev server ready: http://localhost:8888   │
+   │                                                   │
+   ╰───────────────────────────────────────────────────╯
+
+(node:105402) [DEP0060] DeprecationWarning: The `util._extend` API is deprecated. Please use Object.assign() instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
