@@ -1,0 +1,1075 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Owner Vault - Buyzo Cart</title>
+  <link rel="icon" type="image/png" href="favicon.png">
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --primary-light: #eff6ff;
+      --secondary: #f59e0b;
+      --success: #16a34a;
+      --danger: #ef4444;
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --text: #0f172a;
+      --text-secondary: #64748b;
+      --border: #e2e8f0;
+      --radius: 12px;
+      --radius-sm: 8px;
+      --shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);
+      --shadow-md: 0 10px 15px -3px rgba(0,0,0,0.05), 0 4px 6px -2px rgba(0,0,0,0.03);
+      --transition: all 0.2s ease;
+    }
+
+    [data-theme="dark"] {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --text: #f1f5f9;
+      --text-secondary: #94a3b8;
+      --border: #334155;
+      --shadow: 0 4px 6px -1px rgba(0,0,0,0.2);
+      --shadow-md: 0 10px 15px -3px rgba(0,0,0,0.3);
+      --primary-light: rgba(37,99,235,0.15);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    input, textarea, select { user-select: text; -webkit-user-select: text; }
+    a { color: inherit; text-decoration: none; }
+
+    /* Header */
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: var(--shadow);
+    }
+    .brand {
+      font-weight: 800;
+      font-size: 19px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+    }
+    .chip {
+      background: var(--primary);
+      color: white;
+      font-weight: 800;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+    .header-actions { display: flex; align-items: center; gap: 12px; }
+
+    /* Layout */
+    .container {
+      max-width: 1000px;
+      width: 100%;
+      margin: 30px auto;
+      padding: 0 20px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Cards */
+    .card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+    .card-header {
+      margin-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .card-title {
+      font-size: 17px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Forms */
+    .form-group { margin-bottom: 18px; }
+    .form-label { display: block; margin-bottom: 6px; font-size: 13.5px; font-weight: 600; color: var(--text); }
+    .form-control {
+      width: 100%;
+      padding: 11px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 14.5px;
+      font-family: inherit;
+      transition: var(--transition);
+    }
+    .form-control:focus { outline: none; border-color: var(--primary); background: var(--surface); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    textarea.form-control { resize: vertical; min-height: 80px; }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 11px 22px;
+      border-radius: var(--radius-sm);
+      font-weight: 700;
+      font-size: 14px;
+      border: none;
+      cursor: pointer;
+      font-family: inherit;
+      transition: var(--transition);
+      white-space: nowrap;
+    }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:hover { background: var(--primary-dark); }
+    .btn-secondary { background: var(--border); color: var(--text); }
+    .btn-secondary:hover { background: var(--text-secondary); color: white; }
+    .btn-outline { background: transparent; border: 1.5px solid var(--border); color: var(--text); }
+    .btn-outline:hover { border-color: var(--primary); color: var(--primary); }
+    .btn-danger { background: var(--danger); color: white; }
+    .btn-danger:hover { background: #b91c1c; }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    /* Tabs */
+    .tabs-nav {
+      display: flex;
+      overflow-x: auto;
+      gap: 6px;
+      margin-bottom: 24px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 4px;
+    }
+    .tab-btn {
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 13.5px;
+      border: none;
+      background: transparent;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: var(--transition);
+      white-space: nowrap;
+    }
+    .tab-btn:hover { background: var(--border); color: var(--text); }
+    .tab-btn.active { background: var(--primary-light); color: var(--primary); }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* Lockscreen */
+    .lockscreen {
+      max-width: 400px;
+      width: 100%;
+      margin: auto;
+      padding: 30px;
+      text-align: center;
+      animation: fadeInUp 0.4s ease;
+    }
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* Toggle Switches */
+    .toggle-container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .toggle-container:last-child { border-bottom: none; }
+    .toggle-info h4 { font-size: 14.5px; font-weight: 700; margin-bottom: 3px; }
+    .toggle-info p { font-size: 12.5px; color: var(--text-secondary); }
+
+    .toggle { position: relative; display: inline-block; width: 46px; height: 26px; cursor: pointer; }
+    .toggle input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider { position: absolute; inset: 0; background: #cbd5e1; border-radius: 34px; transition: 0.3s; }
+    .toggle-slider:before { content: ''; position: absolute; height: 18px; width: 18px; left: 4px; bottom: 4px; background: white; border-radius: 50%; transition: 0.3s; }
+    .toggle input:checked + .toggle-slider { background: var(--primary); }
+    .toggle input:checked + .toggle-slider:before { transform: translateX(20px); }
+
+    /* Loading Spinner */
+    .spinner {
+      width: 36px;
+      height: 36px;
+      border: 3.5px solid var(--border);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 40px auto;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Toast */
+    .toast {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(100px);
+      background: #1e293b; color: white; padding: 12px 24px; border-radius: 50px;
+      font-size: 13.5px; font-weight: 600; z-index: 10000; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      box-shadow: var(--shadow-md); opacity: 0;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+    .toast.success { background: var(--success); }
+    .toast.error { background: var(--danger); }
+    .toast.warning { background: var(--secondary); }
+
+    @media (max-width: 600px) {
+      .form-row { grid-template-columns: 1fr; gap: 0; }
+      .container { padding: 0 14px; }
+      header { padding: 12px 16px; }
+    }
+  </style>
+</head>
+<body oncontextmenu="return false;">
+
+  <!-- Header -->
+  <header>
+    <div class="brand" onclick="window.location.href='/'">
+      <span class="chip">BUYZO</span>
+      <span>Cart Owner Vault</span>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-outline btn-sm" onclick="window.location.href='/'" style="padding: 6px 14px; border-radius: var(--radius-sm);">
+        <i class="fas fa-store"></i> Back to Store
+      </button>
+    </div>
+  </header>
+
+  <!-- Container -->
+  <div class="container">
+
+    <!-- Loading Stage -->
+    <div id="loadingStage" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 50vh;">
+      <div class="spinner"></div>
+      <p id="loadingMsg" style="color: var(--text-secondary); font-weight: 500; font-size: 14px; margin-top: 10px;">Establishing secure connection...</p>
+    </div>
+
+    <!-- Login / Access Denied State -->
+    <div id="loginStage" style="display: none; max-width: 400px; width: 100%; margin: auto; animation: fadeInUp 0.4s ease;">
+      <div class="card" style="text-align: center; padding: 32px 24px;">
+        <div style="font-size: 3.5rem; margin-bottom: 16px; color: var(--primary);">👤</div>
+        <h2 style="font-weight: 800; margin-bottom: 8px;">Owner Authentication</h2>
+        <p style="color: var(--text-secondary); font-size: 13.5px; margin-bottom: 24px; line-height: 1.5;">Please log into your Admin / Owner account to access the Owner Vault.</p>
+        <button class="btn btn-primary" onclick="triggerAdminLogin()" style="width: 100%; padding: 12px; border-radius: 10px; font-size: 15px;">
+          <i class="fas fa-sign-in-alt"></i> Login via Store
+        </button>
+      </div>
+    </div>
+
+    <!-- 1. Master Password Prompts (Lockscreen) -->
+    <div id="lockscreenStage" style="display: none;">
+      <div class="lockscreen card">
+        <div style="font-size: 3rem; margin-bottom: 16px; color: var(--primary);" id="lockIcon">🔒</div>
+
+        <!-- FIRST TIME SETUP VIEW -->
+        <div id="setupView" style="display: none;">
+          <h2 style="font-weight: 800; margin-bottom: 6px;">Create Master Password</h2>
+          <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 20px; line-height: 1.5;">Welcome Owner! Establish a secure, hashed Master Password to encrypt and guard the vault.</p>
+          <div class="form-group">
+            <input type="password" class="form-control" id="setupPassword" placeholder="Minimum 6 characters" style="text-align: center; font-size: 16px; padding: 12px;">
+          </div>
+          <div class="form-group">
+            <input type="password" class="form-control" id="setupPasswordConfirm" placeholder="Confirm password" style="text-align: center; font-size: 16px; padding: 12px;">
+          </div>
+          <button class="btn btn-primary" onclick="handleSetupPassword()" style="width: 100%; padding: 12px; font-size: 15px; border-radius: 10px;">
+            <i class="fas fa-key"></i> Create & Initialize Vault
+          </button>
+        </div>
+
+        <!-- UNLOCK VIEW -->
+        <div id="unlockView" style="display: none;">
+          <h2 style="font-weight: 800; margin-bottom: 6px;">Vault Locked</h2>
+          <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 20px;">Enter your Master Password to decrypt and access configuration.</p>
+          <div class="form-group">
+            <input type="password" class="form-control" id="unlockPassword" placeholder="••••••" style="text-align: center; font-size: 20px; letter-spacing: 4px; padding: 12px;">
+          </div>
+          <div id="lockoutTimer" style="display: none; color: var(--danger); font-weight: 700; font-size: 13.5px; margin-bottom: 16px;"></div>
+          <button class="btn btn-primary" id="unlockBtn" onclick="handleUnlock()" style="width: 100%; padding: 12px; font-size: 15px; border-radius: 10px;">
+            <i class="fas fa-unlock"></i> Unlock Owner Vault
+          </button>
+          <div style="margin-top: 16px; font-size: 12px; color: var(--text-secondary);">
+            Only authenticated Owner account can trigger a password reset.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. Main Config Dashboard (unlocked) -->
+    <div id="dashboardStage" style="display: none;">
+
+      <!-- Nav Tabs -->
+      <div class="tabs-nav">
+        <button class="tab-btn active" onclick="switchTab('websiteTab', this)"><i class="fas fa-globe"></i> Website</button>
+        <button class="tab-btn" onclick="switchTab('paymentTab', this)"><i class="fas fa-credit-card"></i> Payments</button>
+        <button class="tab-btn" onclick="switchTab('emailTab', this)"><i class="fas fa-envelope"></i> Email API</button>
+        <button class="tab-btn" onclick="switchTab('togglesTab', this)"><i class="fas fa-toggle-on"></i> Toggles</button>
+        <button class="tab-btn" onclick="switchTab('apiKeysTab', this)"><i class="fas fa-key"></i> Third-Party</button>
+        <button class="tab-btn" onclick="switchTab('securityTab', this)"><i class="fas fa-shield-alt"></i> Security & PW</button>
+      </div>
+
+      <!-- Tab Contents -->
+
+      <!-- A. Website Settings -->
+      <div id="websiteTab" class="tab-content active">
+        <div class="card">
+          <div class="card-header"><h3 class="card-title">🌐 Website Settings</h3></div>
+          <div class="card-body">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Store Name</label>
+                <input class="form-control" id="cfgStoreName" placeholder="e.g. Buyzo Cart">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Website URL</label>
+                <input class="form-control" id="cfgWebsiteUrl" placeholder="https://buyzocart.shop">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Support Email</label>
+                <input class="form-control" id="cfgStoreEmail" placeholder="support@buyzocart.shop">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Support Phone</label>
+                <input class="form-control" id="cfgStorePhone" placeholder="+91 9557987574">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- B. Payment Settings -->
+      <div id="paymentTab" class="tab-content">
+        <div class="card">
+          <div class="card-header"><h3 class="card-title">💳 Payment Gateway & Charges</h3></div>
+          <div class="card-body">
+            <div style="background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; margin-bottom: 20px; font-size: 13px;">
+              <strong>🔐 Razorpay Dynamic Integration:</strong> Credentials saved here are securely evaluated in serverless functions on the backend. Never exposed to the public frontend.
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Razorpay Key ID</label>
+                <input class="form-control" id="cfgRzpKeyId" placeholder="rzp_live_xxxxx or rzp_test_xxxxx">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Razorpay Key Secret</label>
+                <input type="password" class="form-control" id="cfgRzpKeySecret" placeholder="••••••••••••••••••••">
+              </div>
+            </div>
+            <div style="height: 1px; background: var(--border); margin: 10px 0 20px;"></div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Delivery Charge (₹)</label>
+                <input type="number" class="form-control" id="cfgDeliveryCharge" placeholder="50">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Gateway Surcharge Percent (%)</label>
+                <input type="number" class="form-control" id="cfgGatewayChargePercent" placeholder="2">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Free Shipping Minimum Threshold (₹)</label>
+              <input type="number" class="form-control" id="cfgFreeShippingOver" placeholder="999" style="width: 50%;">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- C. Email API Settings -->
+      <div id="emailTab" class="tab-content">
+        <div class="card">
+          <div class="card-header"><h3 class="card-title">✉️ Email SMTP Service Configuration</h3></div>
+          <div class="card-body">
+            <div style="background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; margin-bottom: 20px; font-size: 13px;">
+              <strong>📨 SMTP Notification Module:</strong> Configure your SMTP provider (SendGrid, Mailgun, Resend, Gmail, Custom SMTP) below. Email operations are fully backend-managed and verified.
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">SMTP Host / Server</label>
+                <input class="form-control" id="cfgSmtpHost" placeholder="e.g. smtp.gmail.com or smtp.sendgrid.net">
+              </div>
+              <div class="form-group">
+                <label class="form-label">SMTP Port</label>
+                <input type="number" class="form-control" id="cfgSmtpPort" placeholder="587">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">SMTP Username / API Key ID</label>
+                <input class="form-control" id="cfgSmtpUser" placeholder="e.g. user@gmail.com or apikey">
+              </div>
+              <div class="form-group">
+                <label class="form-label">SMTP Password / API Key Secret</label>
+                <input type="password" class="form-control" id="cfgSmtpPass" placeholder="••••••••••••••••••••">
+              </div>
+            </div>
+            <div style="height: 1px; background: var(--border); margin: 10px 0 20px;"></div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Sender Email Address</label>
+                <input class="form-control" id="cfgSenderEmail" placeholder="noreply@buyzocart.shop">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Sender Display Name</label>
+                <input class="form-control" id="cfgSenderName" placeholder="Buyzo Cart Alerts">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Owner Notification Receiver Email (Alerts go here)</label>
+              <input class="form-control" id="cfgReceiverEmail" placeholder="buyzocartshop@gmail.com" style="width: 50%;">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- D. Feature Toggles -->
+      <div id="togglesTab" class="tab-content">
+        <div class="card">
+          <div class="card-header"><h3 class="card-title">⚙️ Feature Toggles & Admin Settings</h3></div>
+          <div class="card-body" style="padding-top: 0;">
+
+            <div class="toggle-container">
+              <div class="toggle-info">
+                <h4>Cash on Delivery (COD)</h4>
+                <p>Allow customers to pay via COD at checkout</p>
+              </div>
+              <label class="toggle"><input type="checkbox" id="cfgToggleCod" checked><span class="toggle-slider"></span></label>
+            </div>
+
+            <div class="toggle-container">
+              <div class="toggle-info">
+                <h4>Dynamic 2FA Option for Users</h4>
+                <p>Toggle availability of Two-Factor Authentication under user accounts</p>
+              </div>
+              <label class="toggle"><input type="checkbox" id="cfgToggle2FA" checked><span class="toggle-slider"></span></label>
+            </div>
+
+            <div class="toggle-container">
+              <div class="toggle-info">
+                <h4>Store Ticker Tape Announcement Banner</h4>
+                <p>Enable flat discount alert banner above store hero section</p>
+              </div>
+              <label class="toggle"><input type="checkbox" id="cfgToggleTicker" checked><span class="toggle-slider"></span></label>
+            </div>
+
+            <div class="toggle-container">
+              <div class="toggle-info">
+                <h4>Production/Maintenance Safe Mode</h4>
+                <p>Locks storefront in read-only mode for updates</p>
+              </div>
+              <label class="toggle"><input type="checkbox" id="cfgToggleMaintenance"><span class="toggle-slider"></span></label>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- E. Third-Party APIs -->
+      <div id="apiKeysTab" class="tab-content">
+        <div class="card">
+          <div class="card-header"><h3 class="card-title">🔑 Third-Party Integration Keys & Webhook Secrets</h3></div>
+          <div class="card-body">
+            <div class="form-group">
+              <label class="form-label">ImgBB API Key (For Seller Product Image uploads)</label>
+              <input class="form-control" id="cfgImgbbKey" placeholder="imgbb_api_key_xxxxxxxxxxxxx">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Razorpay Webhook Secret (For real-time backend updates)</label>
+              <input type="password" class="form-control" id="cfgRzpWebhookSecret" placeholder="••••••••••••••••••••">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Google Maps / Geolocation Geocoding API Key</label>
+              <input class="form-control" id="cfgGoogleMapsKey" placeholder="google_maps_api_key_xxxxxxx">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- F. Security & Password Management -->
+      <div id="securityTab" class="tab-content">
+        <div class="card">
+          <div class="card-header"><h3 class="card-title">🔐 Manage Master Password</h3></div>
+          <div class="card-body">
+            <div class="form-group">
+              <label class="form-label">Current Master Password</label>
+              <input type="password" class="form-control" id="changeCurrentPassword" placeholder="••••••" style="width: 60%;">
+            </div>
+            <div class="form-group">
+              <label class="form-label">New Master Password</label>
+              <input type="password" class="form-control" id="changeNewPassword" placeholder="Minimum 6 characters" style="width: 60%;">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Confirm New Password</label>
+              <input type="password" class="form-control" id="changeNewPasswordConfirm" placeholder="Confirm password" style="width: 60%;">
+            </div>
+            <button class="btn btn-outline" onclick="handleChangePassword()"><i class="fas fa-lock"></i> Change Master Password</button>
+
+            <div style="height: 1px; background: var(--border); margin: 30px 0 20px;"></div>
+
+            <h4 style="font-weight: 800; font-size: 15px; color: var(--danger); margin-bottom: 8px;">🔄 Account Password Reset</h4>
+            <p style="font-size: 12.5px; color: var(--text-secondary); margin-bottom: 14px; line-height: 1.5;">If you have forgotten your Master Password, you can set a brand new password directly because you are logged in as the authenticated Owner/Admin account.</p>
+            <div class="form-group">
+              <input type="password" class="form-control" id="resetPasswordInput" placeholder="Enter new Master Password" style="width: 60%;">
+            </div>
+            <button class="btn btn-danger btn-sm" onclick="handleOwnerPasswordReset()"><i class="fas fa-undo"></i> Reset Master Password</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Save Floating Button Row -->
+      <div style="position: sticky; bottom: 16px; text-align: right; z-index: 10;">
+        <button class="btn btn-primary" id="saveAllBtn" onclick="handleSaveAllConfigs()" style="padding: 14px 40px; font-size: 15px; border-radius: 12px; box-shadow: 0 4px 14px rgba(37,99,235,0.45);">
+          <i class="fas fa-save"></i> Save All Configurations
+        </button>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast" id="vaultToast"></div>
+
+  <!-- FIREBASE INTEGRATION & CORE CONTROLLER -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
+    import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-database.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js";
+
+    // Firebase Config
+    const firebaseConfig = {
+      apiKey: "AIzaSyCHFUx3Y1L3mvyLyDMHVKQE6eXi50_fewE",
+      authDomain: "buyzocart.firebaseapp.com",
+      databaseURL: "https://buyzocart-default-rtdb.firebaseio.com",
+      projectId: "buyzocart",
+      storageBucket: "buyzocart.firebasestorage.app",
+      messagingSenderId: "640560737762",
+      appId: "1:640560737762:web:7fe368df6486d6da759dbb"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const auth = getAuth(app);
+
+    // Globals
+    window._vaultAuth = auth;
+    window._vaultState = {
+      user: null,
+      idToken: null,
+      vaultToken: null,
+      isSetup: false,
+      lockoutUntil: 0
+    };
+
+    // Initialize Auth Listener
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        showStage("loginStage");
+        return;
+      }
+
+      window._vaultState.user = user;
+      updateLoadingMsg("Verifying admin privileges...");
+
+      try {
+        const idToken = await user.getIdToken();
+        window._vaultState.idToken = idToken;
+
+        // Check if listed in /admins in the database
+        const adminSnap = await get(ref(db, `admins/${user.uid}`));
+        if (!adminSnap.exists() || adminSnap.val() !== true) {
+          // Access Denied
+          document.getElementById('loadingStage').innerHTML = `
+            <div style="text-align: center; padding: 40px 20px;">
+              <span style="font-size: 3rem;">🚫</span>
+              <h2 style="color: var(--danger); margin-top: 12px; font-weight: 800;">Access Denied</h2>
+              <p style="color: var(--text-secondary); margin-top: 8px; font-size: 14px;">Your account (${user.email}) is not authorized to access the Owner Vault.</p>
+              <button class="btn btn-outline" onclick="window.location.href='/'" style="margin-top: 20px;">Return to Store</button>
+            </div>
+          `;
+          return;
+        }
+
+        // Admin verified! Now check setup status
+        await checkVaultSetupStatus();
+
+      } catch (err) {
+        console.error("Auth initialization error:", err);
+        showToast("Initialization failed. " + err.message, "error");
+      }
+    });
+
+    // Vault status checker
+    async function checkVaultSetupStatus() {
+      updateLoadingMsg("Retrieving vault lock status...");
+      try {
+        const res = await fetch("/api/owner-vault/status", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ idToken: window._vaultState.idToken })
+        });
+
+        if (!res.ok) {
+          throw new Error("Backend controller failed to retrieve status.");
+        }
+
+        const data = await res.json();
+        window._vaultState.isSetup = data.isSetup;
+
+        showStage("lockscreenStage");
+        if (data.isSetup) {
+          document.getElementById("setupView").style.display = "none";
+          document.getElementById("unlockView").style.display = "block";
+          document.getElementById("unlockPassword").focus();
+        } else {
+          document.getElementById("setupView").style.display = "block";
+          document.getElementById("unlockView").style.display = "none";
+          document.getElementById("setupPassword").focus();
+        }
+      } catch (err) {
+        document.getElementById('loadingStage').innerHTML = `
+          <div style="text-align: center; padding: 40px 20px;">
+            <span style="font-size: 3rem;">⚠️</span>
+            <h2 style="color: var(--danger); margin-top: 12px; font-weight: 800;">Backend Connection Failure</h2>
+            <p style="color: var(--text-secondary); margin-top: 8px; font-size: 14px;">Failed to establish communication with the Owner Vault API serverless backend.</p>
+            <p style="color: var(--text-secondary); font-size: 12px; margin-top: 4px;">Make sure FIREBASE_DB_SECRET is configured in your Netlify Environment Variables.</p>
+            <button class="btn btn-primary" onclick="location.reload()" style="margin-top: 20px;">Retry Connection</button>
+          </div>
+        `;
+      }
+    }
+  </script>
+
+  <!-- Frontend logic controller -->
+  <script>
+    // General helpers
+    function showStage(stageId) {
+      document.getElementById("loadingStage").style.display = "none";
+      document.getElementById("loginStage").style.display = stageId === "loginStage" ? "block" : "none";
+      document.getElementById("lockscreenStage").style.display = stageId === "lockscreenStage" ? "block" : "none";
+      document.getElementById("dashboardStage").style.display = stageId === "dashboardStage" ? "block" : "none";
+    }
+
+    function updateLoadingMsg(msg) {
+      document.getElementById("loadingMsg").textContent = msg;
+    }
+
+    function showToast(msg, type = "success") {
+      const t = document.getElementById("vaultToast");
+      if (!t) return;
+      t.textContent = msg;
+      t.className = "toast show " + type;
+      clearTimeout(t._timer);
+      t._timer = setTimeout(() => { t.classList.remove("show"); }, 3000);
+    }
+
+    function triggerAdminLogin() {
+      // Redirect to main store home page and open login modal
+      window.location.href = "/#homePage?login=admin";
+    }
+
+    // Switch Tabs inside dashboard
+    function switchTab(tabId, btn) {
+      document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
+      document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+      document.getElementById(tabId).classList.add("active");
+      btn.classList.add("active");
+    }
+
+    // ── MASTER PASSWORD INTERACTION handlers ──
+
+    // First time setup
+    async function handleSetupPassword() {
+      const pass = document.getElementById("setupPassword").value;
+      const confirm = document.getElementById("setupPasswordConfirm").value;
+
+      if (!pass || pass.length < 6) {
+        showToast("Password must be at least 6 characters.", "error");
+        return;
+      }
+      if (pass !== confirm) {
+        showToast("Passwords do not match.", "error");
+        return;
+      }
+
+      showToast("Initializing Master Password...", "warning");
+      try {
+        const res = await fetch("/api/owner-vault/setup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            idToken: window._vaultState.idToken,
+            password: pass
+          })
+        });
+
+        const data = await res.json();
+        if (res.ok && data.success) {
+          showToast("Master Password setup successful! Please unlock.", "success");
+          document.getElementById("setupView").style.display = "none";
+          document.getElementById("unlockView").style.display = "block";
+          document.getElementById("setupPassword").value = "";
+          document.getElementById("setupPasswordConfirm").value = "";
+          document.getElementById("unlockPassword").focus();
+        } else {
+          showToast(data.error || "Setup failed.", "error");
+        }
+      } catch (err) {
+        showToast("Network error. Try again.", "error");
+      }
+    }
+
+    // Unlock
+    async function handleUnlock() {
+      const pass = document.getElementById("unlockPassword").value;
+      const btn = document.getElementById("unlockBtn");
+
+      if (!pass) {
+        showToast("Please enter Master Password.", "error");
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = "<i class='fas fa-spinner fa-spin'></i> Decrypting...";
+
+      try {
+        const res = await fetch("/api/owner-vault/unlock", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            idToken: window._vaultState.idToken,
+            password: pass
+          })
+        });
+
+        const data = await res.json();
+        if (res.ok && data.success) {
+          window._vaultState.vaultToken = data.vaultToken;
+          showToast("Vault successfully unlocked! Decrypting configs...", "success");
+
+          // Clear password input
+          document.getElementById("unlockPassword").value = "";
+
+          // Fetch current vault configurations
+          await fetchVaultConfigs();
+        } else {
+          showToast(data.error || "Incorrect Master Password.", "error");
+
+          // Handle lockout check (Status 423)
+          if (res.status === 423) {
+            startLockoutCountdown(Date.now() + 15 * 60 * 1000); // 15 mins
+          }
+        }
+      } catch (err) {
+        showToast("Network error. Please try again.", "error");
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = "<i class='fas fa-unlock'></i> Unlock Owner Vault";
+      }
+    }
+
+    // Lockout timer
+    let _lockoutTimerInterval = null;
+    function startLockoutCountdown(lockedUntil) {
+      const timerEl = document.getElementById("lockoutTimer");
+      const pwdInput = document.getElementById("unlockPassword");
+      const btn = document.getElementById("unlockBtn");
+
+      if (pwdInput) pwdInput.disabled = true;
+      if (btn) btn.disabled = true;
+      if (timerEl) timerEl.style.display = "block";
+
+      clearInterval(_lockoutTimerInterval);
+      _lockoutTimerInterval = setInterval(() => {
+        const remaining = lockedUntil - Date.now();
+        if (remaining <= 0) {
+          clearInterval(_lockoutTimerInterval);
+          if (timerEl) timerEl.style.display = "none";
+          if (pwdInput) { pwdInput.disabled = false; pwdInput.value = ""; pwdInput.focus(); }
+          if (btn) btn.disabled = false;
+          return;
+        }
+
+        const mins = Math.floor(remaining / 60000);
+        const secs = Math.ceil((remaining % 60000) / 1000);
+        if (timerEl) {
+          timerEl.textContent = `❌ Vault Locked. Try again in ${mins}m ${secs < 10 ? '0' : ''}${secs}s`;
+        }
+      }, 1000);
+    }
+
+    // Fetch Configurations
+    async function fetchVaultConfigs() {
+      try {
+        const res = await fetch("/api/owner-vault/get-config", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            idToken: window._vaultState.idToken,
+            vaultToken: window._vaultState.vaultToken
+          })
+        });
+
+        const data = await res.json();
+        if (res.ok && data.config) {
+          populateConfigUI(data.config);
+          showStage("dashboardStage");
+        } else {
+          showToast(data.error || "Failed to fetch configurations.", "error");
+        }
+      } catch (err) {
+        showToast("Failed to retrieve vault data.", "error");
+      }
+    }
+
+    // Populate values inside UI inputs
+    function populateConfigUI(c) {
+      const w = c.website || {};
+      const p = c.payment || {};
+      const m = c.email || {};
+      const t = c.toggles || {};
+      const tp = c.thirdParty || {};
+
+      // Website
+      document.getElementById("cfgStoreName").value = w.storeName || "Buyzo Cart";
+      document.getElementById("cfgWebsiteUrl").value = w.websiteUrl || "https://buyzocart.shop";
+      document.getElementById("cfgStoreEmail").value = w.storeEmail || "support@buyzocart.shop";
+      document.getElementById("cfgStorePhone").value = w.storePhone || "+91 9557987574";
+
+      // Payments
+      document.getElementById("cfgRzpKeyId").value = p.razorpayKeyId || "";
+      document.getElementById("cfgRzpKeySecret").value = p.razorpayKeySecret || "";
+      document.getElementById("cfgDeliveryCharge").value = p.deliveryCharge || 50;
+      document.getElementById("cfgGatewayChargePercent").value = p.gatewayChargePercent || 2;
+      document.getElementById("cfgFreeShippingOver").value = p.freeShippingOver || 999;
+
+      // Email SMTP
+      document.getElementById("cfgSmtpHost").value = m.smtpHost || "";
+      document.getElementById("cfgSmtpPort").value = m.smtpPort || 587;
+      document.getElementById("cfgSmtpUser").value = m.smtpUser || "";
+      document.getElementById("cfgSmtpPass").value = m.smtpPass || "";
+      document.getElementById("cfgSenderEmail").value = m.senderEmail || "noreply@buyzocart.shop";
+      document.getElementById("cfgSenderName").value = m.senderName || "Buyzo Cart Alerts";
+      document.getElementById("cfgReceiverEmail").value = m.receiverEmail || "buyzocartshop@gmail.com";
+
+      // Toggles
+      document.getElementById("cfgToggleCod").checked = t.enableCod !== false;
+      document.getElementById("cfgToggle2FA").checked = t.enable2FA !== false;
+      document.getElementById("cfgToggleTicker").checked = t.enableTicker !== false;
+      document.getElementById("cfgToggleMaintenance").checked = t.enableMaintenance === true;
+
+      // Third-Party keys
+      document.getElementById("cfgImgbbKey").value = tp.imgbbKey || "";
+      document.getElementById("cfgRzpWebhookSecret").value = p.razorpayWebhookSecret || "";
+      document.getElementById("cfgGoogleMapsKey").value = tp.googleMapsKey || "";
+    }
+
+    // Save All Configuration Updates
+    async function handleSaveAllConfigs() {
+      const btn = document.getElementById("saveAllBtn");
+      btn.disabled = true;
+      btn.innerHTML = "<i class='fas fa-spinner fa-spin'></i> Saving Configurations...";
+
+      const config = {
+        website: {
+          storeName: document.getElementById("cfgStoreName").value.trim(),
+          websiteUrl: document.getElementById("cfgWebsiteUrl").value.trim(),
+          storeEmail: document.getElementById("cfgStoreEmail").value.trim(),
+          storePhone: document.getElementById("cfgStorePhone").value.trim()
+        },
+        payment: {
+          razorpayKeyId: document.getElementById("cfgRzpKeyId").value.trim(),
+          razorpayKeySecret: document.getElementById("cfgRzpKeySecret").value.trim(),
+          razorpayWebhookSecret: document.getElementById("cfgRzpWebhookSecret").value.trim(),
+          deliveryCharge: parseFloat(document.getElementById("cfgDeliveryCharge").value || 50),
+          gatewayChargePercent: parseFloat(document.getElementById("cfgGatewayChargePercent").value || 2),
+          freeShippingOver: parseFloat(document.getElementById("cfgFreeShippingOver").value || 999)
+        },
+        email: {
+          smtpHost: document.getElementById("cfgSmtpHost").value.trim(),
+          smtpPort: parseInt(document.getElementById("cfgSmtpPort").value || 587),
+          smtpUser: document.getElementById("cfgSmtpUser").value.trim(),
+          smtpPass: document.getElementById("cfgSmtpPass").value.trim(),
+          senderEmail: document.getElementById("cfgSenderEmail").value.trim(),
+          senderName: document.getElementById("cfgSenderName").value.trim(),
+          receiverEmail: document.getElementById("cfgReceiverEmail").value.trim()
+        },
+        toggles: {
+          enableCod: document.getElementById("cfgToggleCod").checked,
+          enable2FA: document.getElementById("cfgToggle2FA").checked,
+          enableTicker: document.getElementById("cfgToggleTicker").checked,
+          enableMaintenance: document.getElementById("cfgToggleMaintenance").checked
+        },
+        thirdParty: {
+          imgbbKey: document.getElementById("cfgImgbbKey").value.trim(),
+          googleMapsKey: document.getElementById("cfgGoogleMapsKey").value.trim()
+        }
+      };
+
+      try {
+        const res = await fetch("/api/owner-vault/update-config", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            idToken: window._vaultState.idToken,
+            vaultToken: window._vaultState.vaultToken,
+            config: config
+          })
+        });
+
+        const data = await res.json();
+        if (res.ok && data.success) {
+          showToast("All configuration updates saved successfully! ⚙️", "success");
+        } else {
+          showToast(data.error || "Failed to update configurations.", "error");
+        }
+      } catch (err) {
+        showToast("Network failure. Save failed.", "error");
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = "<i class='fas fa-save'></i> Save All Configurations";
+      }
+    }
+
+    // Change Master Password
+    async function handleChangePassword() {
+      const cur = document.getElementById("changeCurrentPassword").value;
+      const nPass = document.getElementById("changeNewPassword").value;
+      const nConfirm = document.getElementById("changeNewPasswordConfirm").value;
+
+      if (!cur || !nPass) {
+        showToast("Fields cannot be empty.", "error");
+        return;
+      }
+      if (nPass.length < 6) {
+        showToast("New password must be at least 6 characters.", "error");
+        return;
+      }
+      if (nPass !== nConfirm) {
+        showToast("Passwords do not match.", "error");
+        return;
+      }
+
+      try {
+        const res = await fetch("/api/owner-vault/change-password", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            idToken: window._vaultState.idToken,
+            vaultToken: window._vaultState.vaultToken,
+            currentPassword: cur,
+            newPassword: nPass
+          })
+        });
+
+        const data = await res.json();
+        if (res.ok && data.success) {
+          showToast("Master Password updated successfully! 🔐", "success");
+          document.getElementById("changeCurrentPassword").value = "";
+          document.getElementById("changeNewPassword").value = "";
+          document.getElementById("changeNewPasswordConfirm").value = "";
+        } else {
+          showToast(data.error || "Password change failed.", "error");
+        }
+      } catch (err) {
+        showToast("Network error. Try again.", "error");
+      }
+    }
+
+    // Owner Authenticated Reset Password (forgot old password reset)
+    async function handleOwnerPasswordReset() {
+      const pass = document.getElementById("resetPasswordInput").value;
+      if (!pass || pass.length < 6) {
+        showToast("Password must be at least 6 characters.", "error");
+        return;
+      }
+
+      if (!confirm("Are you sure you want to overwrite your Master Password?")) return;
+
+      try {
+        const res = await fetch("/api/owner-vault/reset-password", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            idToken: window._vaultState.idToken,
+            newPassword: pass
+          })
+        });
+
+        const data = await res.json();
+        if (res.ok && data.success) {
+          showToast("Master Password has been reset successfully! ✅", "success");
+          document.getElementById("resetPasswordInput").value = "";
+        } else {
+          showToast(data.error || "Reset failed.", "error");
+        }
+      } catch (err) {
+        showToast("Network error.", "error");
+      }
+    }
+  </script>
+
+  <!-- Devtools / Click Prevention Protection matching security.js -->
+  <script>
+    (function() {
+      // frame blocking
+      if (window.self !== window.top) {
+        document.documentElement.innerHTML = '';
+        throw new Error('embedding blocked');
+      }
+
+      // context menu blocking
+      document.addEventListener('contextmenu', e => e.preventDefault());
+
+      // hotkey blocking
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'F12' ||
+            (e.ctrlKey && e.shiftKey && e.key === 'I') ||
+            (e.ctrlKey && e.shiftKey && e.key === 'J') ||
+            (e.ctrlKey && e.key === 'U') ||
+            (e.metaKey && e.altKey && e.key === 'I')) {
+          e.preventDefault();
+          return false;
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

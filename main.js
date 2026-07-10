@@ -396,6 +396,36 @@
       } catch(e) {}
     }
 
+    async function bzSendSecureEmail(eventType, additionalData = {}) {
+      try {
+        if (!window.firebase || !window.firebase.auth || !window.firebase.auth.currentUser) {
+          console.warn("[Secure Email] Cannot send email. User not authenticated.");
+          return;
+        }
+        const user = window.firebase.auth.currentUser;
+        const idToken = await user.getIdToken();
+
+        const payload = {
+          idToken: idToken,
+          eventType: eventType,
+          ...additionalData
+        };
+
+        const res = await fetch('/api/owner-vault/send-email', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+        console.log(`[Secure Email] Sent event ${eventType} result:`, data);
+      } catch(err) {
+        console.warn("[Secure Email] Error sending transactional email:", err);
+      }
+    }
+
     function openMenu() {
       document.getElementById('mobileMenu').classList.add('active');
       document.getElementById('menuOverlay').classList.add('active');
@@ -5209,38 +5239,40 @@
       }
       meta.hasLoggedIn = true;
       localStorage.setItem(NOTIF_META_KEY, JSON.stringify(meta));
-      const cfg = window.BZ_CONFIG?.emailjs;
-      bzSendEmail(cfg?.loginTemplateId, {
-        to_email: email,
-        store_name: window.BZ_CONFIG?.store?.name || 'Buyzo Cart',
-        login_time: new Date().toLocaleString('en-IN'),
-        device: navigator.userAgent.slice(0,60)
+
+      const ua = navigator.userAgent;
+      let browser = "Unknown Browser";
+      let os = "Unknown OS";
+      let device = "Desktop";
+
+      if (ua.indexOf("Chrome") > -1) browser = "Google Chrome";
+      else if (ua.indexOf("Safari") > -1) browser = "Apple Safari";
+      else if (ua.indexOf("Firefox") > -1) browser = "Mozilla Firefox";
+      else if (ua.indexOf("Edge") > -1) browser = "Microsoft Edge";
+
+      if (ua.indexOf("Windows") > -1) os = "Windows";
+      else if (ua.indexOf("Macintosh") > -1) os = "macOS";
+      else if (ua.indexOf("Android") > -1) { os = "Android"; device = "Mobile"; }
+      else if (ua.indexOf("iPhone") > -1) { os = "iOS"; device = "iPhone"; }
+
+      bzSendSecureEmail('user_login', {
+        deviceDetails: {
+          browser: browser,
+          os: os,
+          device: device,
+          location: "Location via IP"
+        }
       });
     }
 
     function sendWelcomeEmail(email, name) {
       addNotif({type:'system', title:'Welcome to Buyzo Cart! 🎉', message:'Hi '+(name||'there')+'! Account created. Enjoy shopping!', badge:'Welcome'});
-      const cfg = window.BZ_CONFIG?.emailjs;
-      bzSendEmail(cfg?.loginTemplateId, {
-        to_email: email,
-        to_name: name || 'Customer',
-        store_name: window.BZ_CONFIG?.store?.name || 'Buyzo Cart',
-        message: 'Welcome to ' + (window.BZ_CONFIG?.store?.name||'Buyzo Cart') + '! Aapka account successfully create ho gaya hai.'
-      });
+      bzSendSecureEmail('new_user_registration', { userName: name || 'Customer' });
     }
 
     function sendOrderNotification(email, orderId, productName, total) {
       addNotif({type:'order', title:'Order Placed! 🛍️', message:(productName||'')+(orderId?' — Order '+orderId:'')+(total?' | ₹'+total:''), badge:'Order Confirmed'});
-      const cfg = window.BZ_CONFIG?.emailjs;
-      bzSendEmail(cfg?.orderTemplateId, {
-        to_email: email,
-        order_id: orderId,
-        product_name: productName || 'Product',
-        total_amount: '₹' + total,
-        store_name: window.BZ_CONFIG?.store?.name || 'Buyzo Cart',
-        order_date: new Date().toLocaleDateString('en-IN'),
-        store_email: window.BZ_CONFIG?.store?.email || ''
-      });
+      bzSendSecureEmail('order_placed', { orderId });
     }
 
     function sendPasswordChangeNotif() {

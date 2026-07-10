@@ -3,19 +3,6 @@
  * Securely creates a Razorpay Order.
  *
  * Secure Backend Integration: NEVER expose your Razorpay Secret Key in frontend code.
- *
- * =================================================================================
- * CONFIGURATION INSTRUCTIONS FOR WEBSITE OWNER:
- *
- * Option A (Recommended & Secure):
- *   Set the following environment variables in your Netlify Dashboard (Site Settings > Environment Variables):
- *   - RAZORPAY_KEY_ID: Your Razorpay API Key ID (e.g., rzp_live_xxxxxxxxxxxxxx or rzp_test_xxxxxxxxxxxxxx)
- *   - RAZORPAY_KEY_SECRET: Your Razorpay API Secret Key (e.g., xxxxxxxxxxxxxxxxxxxxxxxx)
- *
- * Option B (Manual Placeholders):
- *   If not using environment variables, replace the empty strings in the placeholders below
- *   with your actual credentials.
- * =================================================================================
  */
 
 // PLACEHOLDERS FOR WEBSITE OWNER:
@@ -23,6 +10,7 @@ const RAZORPAY_KEY_ID_PLACEHOLDER = "";     // <-- ADD YOUR RAZORPAY KEY ID HERE
 const RAZORPAY_KEY_SECRET_PLACEHOLDER = ""; // <-- ADD YOUR RAZORPAY KEY SECRET HERE
 
 const https = require('https');
+const { getVaultConfig } = require('./utils/email');
 
 exports.handler = async function(event, context) {
   // Allow OPTIONS request for CORS if accessed across domains
@@ -64,9 +52,23 @@ exports.handler = async function(event, context) {
       };
     }
 
-    // Determine credentials: prioritize Environment Variables, then use placeholders
-    const keyId = process.env.RAZORPAY_KEY_ID || RAZORPAY_KEY_ID_PLACEHOLDER;
-    const keySecret = process.env.RAZORPAY_KEY_SECRET || RAZORPAY_KEY_SECRET_PLACEHOLDER;
+    // Determine credentials: prioritize database config, then Environment Variables, then placeholders
+    let keyId = RAZORPAY_KEY_ID_PLACEHOLDER;
+    let keySecret = RAZORPAY_KEY_SECRET_PLACEHOLDER;
+
+    try {
+      const vaultConfig = await getVaultConfig();
+      if (vaultConfig && vaultConfig.payment) {
+        if (vaultConfig.payment.razorpayKeyId) keyId = vaultConfig.payment.razorpayKeyId;
+        if (vaultConfig.payment.razorpayKeySecret) keySecret = vaultConfig.payment.razorpayKeySecret;
+      }
+    } catch (e) {
+      console.error("[Razorpay Order] Failed to load config from Owner Vault:", e);
+    }
+
+    // Environment variables override database configs
+    keyId = process.env.RAZORPAY_KEY_ID || keyId;
+    keySecret = process.env.RAZORPAY_KEY_SECRET || keySecret;
 
     if (!keyId || !keySecret) {
       console.error("[Razorpay] API Key ID or Secret Key is missing.");
