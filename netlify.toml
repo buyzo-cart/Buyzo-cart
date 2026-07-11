@@ -1,6 +1,11 @@
 [build]
   functions = "netlify/functions"
 
+[[redirects]]
+  from = "/api/owner-vault/*"
+  to = "/.netlify/functions/owner-vault/:splat"
+  status = 200
+
 [[headers]]
   for = "/*"
   [headers.values]
