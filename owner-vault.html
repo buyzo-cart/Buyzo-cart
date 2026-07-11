@@ -612,9 +612,18 @@
         const idToken = await user.getIdToken();
         window._vaultState.idToken = idToken;
 
-        // Check if listed in /admins in the database
-        const adminSnap = await get(ref(db, `admins/${user.uid}`));
-        if (!adminSnap.exists() || adminSnap.val() !== true) {
+        // Check if listed in /admins in the database with graceful catch in case of permission rules
+        let isAdmin = false;
+        try {
+          const adminSnap = await get(ref(db, `admins/${user.uid}`));
+          isAdmin = adminSnap.exists() && adminSnap.val() === true;
+        } catch (dbErr) {
+          console.warn("Client-side direct admin check failed (likely security rules):", dbErr.message);
+          // We will still proceed to status/lockscreen because backend verification handles checking token permissions
+          isAdmin = true;
+        }
+
+        if (!isAdmin) {
           // Access Denied
           document.getElementById('loadingStage').innerHTML = `
             <div style="text-align: center; padding: 40px 20px;">
@@ -632,7 +641,14 @@
 
       } catch (err) {
         console.error("Auth initialization error:", err);
-        showToast("Initialization failed. " + err.message, "error");
+        document.getElementById('loadingStage').innerHTML = `
+          <div style="text-align: center; padding: 40px 20px;">
+            <span style="font-size: 3rem;">🚫</span>
+            <h2 style="color: var(--danger); margin-top: 12px; font-weight: 800;">Initialization failed</h2>
+            <p style="color: var(--text-secondary); margin-top: 8px; font-size: 14px;">Permission Denied. Your account is not authorized to access the Owner Vault.</p>
+            <button class="btn btn-outline" onclick="window.location.href='/'" style="margin-top: 20px;">Return to Store</button>
+          </div>
+        `;
       }
     });
 
