@@ -269,9 +269,6 @@
       <button class="btn btn-outline btn-sm" onclick="window.location.href='/'" style="padding: 6px 14px; border-radius: var(--radius-sm);">
         <i class="fas fa-store"></i> Back to Store
       </button>
-      <button class="btn btn-danger btn-sm" id="logoutBtn" onclick="handleLogout()" style="padding: 6px 14px; border-radius: var(--radius-sm); display:none;">
-        <i class="fas fa-sign-out-alt"></i> Logout
-      </button>
     </div>
   </header>
 
@@ -573,8 +570,8 @@
   <!-- FIREBASE INTEGRATION & CORE CONTROLLER -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
-    import { getDatabase, ref, get, set, update } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-database.js";
-    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js";
+    import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-database.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js";
 
     // Firebase Config
     const firebaseConfig = {
@@ -609,7 +606,6 @@
       }
 
       window._vaultState.user = user;
-      document.getElementById("logoutBtn").style.display = "flex";
       updateLoadingMsg("Verifying admin privileges...");
 
       try {
@@ -644,7 +640,7 @@
     async function checkVaultSetupStatus() {
       updateLoadingMsg("Retrieving vault lock status...");
       try {
-        const res = await fetch("/api/owner-vault/status", {
+        const res = await fetch("https://precious-travesseiro-e68f6e.netlify.app/.netlify/functions/owner-vault/status", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ idToken: window._vaultState.idToken })
@@ -735,7 +731,7 @@
 
       showToast("Initializing Master Password...", "warning");
       try {
-        const res = await fetch("/api/owner-vault/setup", {
+        const res = await fetch("https://precious-travesseiro-e68f6e.netlify.app/.netlify/functions/owner-vault/setup", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -774,7 +770,7 @@
       btn.innerHTML = "<i class='fas fa-spinner fa-spin'></i> Decrypting...";
 
       try {
-        const res = await fetch("/api/owner-vault/unlock", {
+        const res = await fetch("https://precious-travesseiro-e68f6e.netlify.app/.netlify/functions/owner-vault/unlock", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -842,7 +838,7 @@
     // Fetch Configurations
     async function fetchVaultConfigs() {
       try {
-        const res = await fetch("/api/owner-vault/get-config", {
+        const res = await fetch("https://precious-travesseiro-e68f6e.netlify.app/.netlify/functions/owner-vault/get-config", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -948,7 +944,7 @@
       };
 
       try {
-        const res = await fetch("/api/owner-vault/update-config", {
+        const res = await fetch("https://precious-travesseiro-e68f6e.netlify.app/.netlify/functions/owner-vault/update-config", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -992,7 +988,7 @@
       }
 
       try {
-        const res = await fetch("/api/owner-vault/change-password", {
+        const res = await fetch("https://precious-travesseiro-e68f6e.netlify.app/.netlify/functions/owner-vault/change-password", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -1028,7 +1024,7 @@
       if (!confirm("Are you sure you want to overwrite your Master Password?")) return;
 
       try {
-        const res = await fetch("/api/owner-vault/reset-password", {
+        const res = await fetch("https://precious-travesseiro-e68f6e.netlify.app/.netlify/functions/owner-vault/reset-password", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -1048,30 +1044,6 @@
         showToast("Network error.", "error");
       }
     }
-    // Lockout countdown
-    function startLockoutCountdown(lockedUntil) {
-      const timerEl = document.getElementById("lockoutTimer");
-      const pwdInput = document.getElementById("unlockPassword");
-      const btn = document.getElementById("unlockBtn");
-      if (pwdInput) pwdInput.disabled = true;
-      if (btn) btn.disabled = true;
-      if (timerEl) timerEl.style.display = "block";
-      clearInterval(_lockoutInterval);
-      _lockoutInterval = setInterval(() => {
-        const remaining = lockedUntil - Date.now();
-        if (remaining <= 0) {
-          clearInterval(_lockoutInterval);
-          if (timerEl) timerEl.style.display = "none";
-          if (pwdInput) { pwdInput.disabled = false; pwdInput.value = ""; pwdInput.focus(); }
-          if (btn) btn.disabled = false;
-          return;
-        }
-        const mins = Math.floor(remaining / 60000);
-        const secs = Math.ceil((remaining % 60000) / 1000);
-        if (timerEl) timerEl.textContent = `❌ Vault Locked. Try again in ${mins}m ${secs < 10 ? '0' : ''}${secs}s`;
-      }, 1000);
-    }
-
   </script>
 
   <!-- Devtools / Click Prevention Protection matching security.js -->
