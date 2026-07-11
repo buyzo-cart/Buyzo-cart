@@ -13,17 +13,18 @@ function hashPassword(password, salt) {
   return crypto.createHmac('sha256', finalSalt).update(password).digest('hex');
 }
 
-// Helper to query Firebase Database via REST API using DB Secret
-async function queryFirebase(path, method = 'GET', payload = null) {
+// Helper to query Firebase Database via REST API using DB Secret or Client ID Token
+async function queryFirebase(path, method = 'GET', payload = null, customAuthToken = null) {
   const dbUrl = process.env.FIREBASE_DATABASE_URL || "https://buyzocart-default-rtdb.firebaseio.com";
   const dbSecret = process.env.FIREBASE_DB_SECRET;
+  const authToken = customAuthToken || dbSecret;
 
-  if (!dbSecret) {
-    console.error("[Owner Vault Backend] FIREBASE_DB_SECRET environment variable is missing.");
-    throw new Error("Database credentials not configured on backend.");
+  if (!authToken) {
+    console.warn("[Owner Vault Backend] Neither FIREBASE_DB_SECRET nor customAuthToken is available.");
+    return null;
   }
 
-  const url = `${dbUrl}/${path}.json?auth=${dbSecret}`;
+  const url = `${dbUrl}/${path}.json?auth=${authToken}`;
   const postData = payload ? JSON.stringify(payload) : null;
 
   return new Promise((resolve, reject) => {
@@ -139,7 +140,20 @@ exports.handler = async function(event, context) {
     const uid = verifiedUser.uid;
 
     // 2. Access Control Check: Check if user is listed in /admins (except for non-admin requests like transactional email sending)
-    const isAdmin = await queryFirebase(`admins/${uid}`);
+    let isAdmin = false;
+    try {
+      isAdmin = await queryFirebase(`admins/${uid}`, 'GET', null, idToken) === true;
+    } catch (e) {
+      console.warn("[Owner Vault Backend] Admin verification check via ID Token failed:", e.message);
+    }
+
+    if (!isAdmin) {
+      try {
+        isAdmin = await queryFirebase(`admins/${uid}`) === true;
+      } catch (e) {
+        console.warn("[Owner Vault Backend] Admin verification check via DB Secret failed:", e.message);
+      }
+    }
 
     // We only bypass the admin check for "send-email" which is used by authenticated users to send their own transactional emails securely!
     if (action !== "send-email" && isAdmin !== true) {
@@ -156,7 +170,7 @@ exports.handler = async function(event, context) {
 
       // A. Check Setup Status
       case "status": {
-        const security = await queryFirebase('owner_vault/security') || {};
+        const security = await queryFirebase('owner_vault/security', 'GET', null, idToken) || {};
         const isSetup = !!security.password_hash;
         return {
           statusCode: 200,
@@ -172,7 +186,7 @@ exports.handler = async function(event, context) {
           return { statusCode: 400, headers: corsHeaders, body: JSON.stringify({ error: "Password must be at least 6 characters." }) };
         }
 
-        const security = await queryFirebase('owner_vault/security') || {};
+        const security = await queryFirebase('owner_vault/security', 'GET', null, idToken) || {};
         if (security.password_hash) {
           return { statusCode: 400, headers: corsHeaders, body: JSON.stringify({ error: "Master Password has already been set up." }) };
         }
@@ -185,7 +199,7 @@ exports.handler = async function(event, context) {
           salt: salt,
           failed_attempts: 0,
           locked_until: 0
-        });
+        }, idToken);
 
         // Trigger owner notification
         try {
@@ -215,7 +229,7 @@ exports.handler = async function(event, context) {
           return { statusCode: 400, headers: corsHeaders, body: JSON.stringify({ error: "Password is required." }) };
         }
 
-        const security = await queryFirebase('owner_vault/security') || {};
+        const security = await queryFirebase('owner_vault/security', 'GET', null, idToken) || {};
         if (!security.password_hash) {
           return { statusCode: 400, headers: corsHeaders, body: JSON.stringify({ error: "Master Password is not set up yet." }) };
         }
@@ -234,8 +248,8 @@ exports.handler = async function(event, context) {
         const hash = hashPassword(password, security.salt);
         if (hash === security.password_hash) {
           // Success: Reset failed attempts
-          await queryFirebase('owner_vault/security/failed_attempts', 'PUT', 0);
-          await queryFirebase('owner_vault/security/locked_until', 'PUT', 0);
+          await queryFirebase('owner_vault/security/failed_attempts', 'PUT', 0, idToken);
+          await queryFirebase('owner_vault/security/locked_until', 'PUT', 0, idToken);
 
           // Generate secure session token
           const token = crypto.randomBytes(32).toString('hex');
@@ -245,7 +259,7 @@ exports.handler = async function(event, context) {
             uid,
             expiresAt: sessionExpiry,
             createdAt: Date.now()
-          });
+          }, idToken);
 
           return {
             statusCode: 200,
@@ -263,7 +277,7 @@ exports.handler = async function(event, context) {
             await queryFirebase('owner_vault/security', 'UPDATE', {
               failed_attempts: 0,
               locked_until: lockTime
-            });
+            }, idToken);
 
             // Trigger Owner alert for failed logins
             try {
@@ -291,7 +305,7 @@ exports.handler = async function(event, context) {
               body: JSON.stringify({ error: "Too many incorrect attempts. Vault has been locked for 15 minutes." })
             };
           } else {
-            await queryFirebase('owner_vault/security/failed_attempts', 'PUT', currentAttempts);
+            await queryFirebase('owner_vault/security/failed_attempts', 'PUT', currentAttempts, idToken);
             const remaining = maxAttempts - currentAttempts;
             return {
               statusCode: 401,
@@ -310,13 +324,13 @@ exports.handler = async function(event, context) {
         }
 
         // Verify session token
-        const session = await queryFirebase(`owner_vault/security/sessions/${vaultToken}`);
+        const session = await queryFirebase(`owner_vault/security/sessions/${vaultToken}`, 'GET', null, idToken);
         if (!session || session.expiresAt < Date.now()) {
           return { statusCode: 401, headers: corsHeaders, body: JSON.stringify({ error: "Session expired. Please re-enter your Master Password." }) };
         }
 
         // Retrieve current configurations (or empty object if none exist)
-        const config = await queryFirebase('owner_vault/config') || {};
+        const config = await queryFirebase('owner_vault/config', 'GET', null, idToken) || {};
         return {
           statusCode: 200,
           headers: corsHeaders,
@@ -334,13 +348,13 @@ exports.handler = async function(event, context) {
         }
 
         // Verify session token
-        const session = await queryFirebase(`owner_vault/security/sessions/${vaultToken}`);
+        const session = await queryFirebase(`owner_vault/security/sessions/${vaultToken}`, 'GET', null, idToken);
         if (!session || session.expiresAt < Date.now()) {
           return { statusCode: 401, headers: corsHeaders, body: JSON.stringify({ error: "Session expired." }) };
         }
 
         // Apply config updates (keep any existing nodes, merge new)
-        await queryFirebase('owner_vault/config', 'UPDATE', newConfig);
+        await queryFirebase('owner_vault/config', 'UPDATE', newConfig, idToken);
 
         // Notify Owner of sensitive setting change
         try {
@@ -374,12 +388,12 @@ exports.handler = async function(event, context) {
         }
 
         // Verify session token
-        const session = await queryFirebase(`owner_vault/security/sessions/${vaultToken}`);
+        const session = await queryFirebase(`owner_vault/security/sessions/${vaultToken}`, 'GET', null, idToken);
         if (!session || session.expiresAt < Date.now()) {
           return { statusCode: 401, headers: corsHeaders, body: JSON.stringify({ error: "Session expired." }) };
         }
 
-        const security = await queryFirebase('owner_vault/security') || {};
+        const security = await queryFirebase('owner_vault/security', 'GET', null, idToken) || {};
         const oldHash = hashPassword(currentPassword, security.salt);
 
         if (oldHash !== security.password_hash) {
@@ -393,7 +407,7 @@ exports.handler = async function(event, context) {
           password_hash: newHash,
           salt: newSalt,
           failed_attempts: 0
-        });
+        }, idToken);
 
         // Notify Owner
         try {
@@ -432,7 +446,7 @@ exports.handler = async function(event, context) {
           salt: newSalt,
           failed_attempts: 0,
           locked_until: 0
-        });
+        }, idToken);
 
         // Notify Owner
         try {
@@ -459,7 +473,7 @@ exports.handler = async function(event, context) {
       case "send-email": {
         const eventType = body.eventType; // 'user_login', 'order_placed', 'new_user_registration'
         const { sendEmail, getLoginEmailTemplate, getOrderEmailTemplate, getOwnerNotificationTemplate } = require('./utils/email');
-        const vaultConfig = await queryFirebase('owner_vault/config') || {};
+        const vaultConfig = await queryFirebase('owner_vault/config', 'GET', null, idToken) || {};
 
         if (eventType === 'user_login') {
           const deviceDetails = body.deviceDetails || {};
@@ -506,7 +520,7 @@ exports.handler = async function(event, context) {
           }
 
           // Fetch order from Firebase using admin access
-          const order = await queryFirebase(`orders/${orderId}`);
+          const order = await queryFirebase(`orders/${orderId}`, 'GET', null, idToken);
           if (!order) {
             return { statusCode: 404, headers: corsHeaders, body: JSON.stringify({ error: "Order not found." }) };
           }

@@ -1,11 +1,12 @@
 {
   "rules": {
     "admins": {
-      // Admins are readable and writeable only by existing authenticated admins.
-      // Initially, the owner will add their UID manually in the Firebase Console.
+      // Admins are writeable only by existing authenticated admins.
+      // Every user can read their own admin flag to verify their privilege level.
       ".read": "auth != null && root.child('admins').child(auth.uid).val() === true",
       ".write": "auth != null && root.child('admins').child(auth.uid).val() === true",
       "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
         ".validate": "newData.isBoolean()"
       }
     },
