@@ -612,31 +612,33 @@
         const idToken = await user.getIdToken();
         window._vaultState.idToken = idToken;
 
-        // Check if listed in /admins in the database with graceful catch in case of permission rules
+        // Check if listed as owner or in admins/sharedAdminsByUid
         let isAdmin = false;
-        try {
-          const adminSnap = await get(ref(db, `admins/${user.uid}`));
-          isAdmin = adminSnap.exists() && adminSnap.val() === true;
-        } catch (dbErr) {
-          console.warn("Client-side direct admin check failed (likely security rules):", dbErr.message);
-          // We will still proceed to status/lockscreen because backend verification handles checking token permissions
+        if (user.email === 'buyzocartshop@gmail.com') {
           isAdmin = true;
+        } else {
+          try {
+            const adminSnap = await get(ref(db, `admins/${user.uid}`));
+            if (adminSnap.exists() && adminSnap.val() === true) {
+              isAdmin = true;
+            }
+          } catch (dbErr) {
+            console.warn("Client-side direct /admins check failed:", dbErr.message);
+          }
+
+          if (!isAdmin) {
+            try {
+              const sharedSnap = await get(ref(db, `sharedAdminsByUid/${user.uid}`));
+              if (sharedSnap.exists()) {
+                isAdmin = true;
+              }
+            } catch (dbErr) {
+              console.warn("Client-side direct /sharedAdminsByUid check failed:", dbErr.message);
+            }
+          }
         }
 
-        if (!isAdmin) {
-          // Access Denied
-          document.getElementById('loadingStage').innerHTML = `
-            <div style="text-align: center; padding: 40px 20px;">
-              <span style="font-size: 3rem;">🚫</span>
-              <h2 style="color: var(--danger); margin-top: 12px; font-weight: 800;">Access Denied</h2>
-              <p style="color: var(--text-secondary); margin-top: 8px; font-size: 14px;">Your account (${user.email}) is not authorized to access the Owner Vault.</p>
-              <button class="btn btn-outline" onclick="window.location.href='/'" style="margin-top: 20px;">Return to Store</button>
-            </div>
-          `;
-          return;
-        }
-
-        // Admin verified! Now check setup status
+        // Proceed to check status via the backend which acts as the authoritative verify-token gate
         await checkVaultSetupStatus();
 
       } catch (err) {
@@ -661,6 +663,19 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ idToken: window._vaultState.idToken })
         });
+
+        if (res.status === 403) {
+          const errData = await res.json().catch(() => ({}));
+          document.getElementById('loadingStage').innerHTML = `
+            <div style="text-align: center; padding: 40px 20px;">
+              <span style="font-size: 3rem;">🚫</span>
+              <h2 style="color: var(--danger); margin-top: 12px; font-weight: 800;">Access Denied</h2>
+              <p style="color: var(--text-secondary); margin-top: 8px; font-size: 14px;">${errData.error || "Your account is not authorized to access the Owner Vault."}</p>
+              <button class="btn btn-outline" onclick="window.location.href='/'" style="margin-top: 20px;">Return to Store</button>
+            </div>
+          `;
+          return;
+        }
 
         if (!res.ok) {
           throw new Error("Backend controller failed to retrieve status.");
