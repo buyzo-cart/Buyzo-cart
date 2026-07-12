@@ -2990,7 +2990,7 @@
             backBtn.disabled = true;
           }
 
-          // Create order on the secure backend
+          // Create order on the secure backend (using full Netlify URL for GitHub Pages compatibility)
           const createResponse = await fetch('https://precious-travesseiro-e68f6e.netlify.app/.netlify/functions/create-order', {
             method: 'POST',
             headers: {
@@ -3039,7 +3039,7 @@
                   confirmBtn.innerHTML = '<div class="loading-spinner" style="display:inline-block;width:12px;height:12px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin .7s linear infinite;margin-right:6px;vertical-align:middle;"></div> Verifying Payment...';
                 }
 
-                // Verify the payment securely on the backend
+                // Verify the payment securely on the backend (using full Netlify URL for GitHub Pages compatibility)
                 const verifyResponse = await fetch('https://precious-travesseiro-e68f6e.netlify.app/.netlify/functions/verify-payment', {
                   method: 'POST',
                   headers: {
