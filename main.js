@@ -3003,8 +3003,23 @@
           });
 
           if (!createResponse.ok) {
-            const errBody = await createResponse.json().catch(() => ({}));
-            throw new Error(errBody.error || errBody.details || 'Failed to create payment order.');
+            let errMsg = 'Failed to create payment order.';
+            try {
+              const errBody = await createResponse.json();
+              if (errBody.error && errBody.details) {
+                errMsg = `${errBody.error} Details: ${errBody.details}`;
+              } else {
+                errMsg = errBody.error || errBody.details || errMsg;
+              }
+            } catch (e) {
+              try {
+                const txt = await createResponse.text();
+                errMsg = txt || `HTTP Error ${createResponse.status}`;
+              } catch (e2) {
+                errMsg = `HTTP Error ${createResponse.status}`;
+              }
+            }
+            throw new Error(errMsg);
           }
 
           const orderDetails = await createResponse.json();
@@ -3038,8 +3053,23 @@
                 });
 
                 if (!verifyResponse.ok) {
-                  const errBody = await verifyResponse.json().catch(() => ({}));
-                  throw new Error(errBody.error || 'Payment verification failed.');
+                  let errMsg = 'Payment verification failed.';
+                  try {
+                    const errBody = await verifyResponse.json();
+                    if (errBody.error && errBody.details) {
+                      errMsg = `${errBody.error} Details: ${errBody.details}`;
+                    } else {
+                      errMsg = errBody.error || errBody.details || errMsg;
+                    }
+                  } catch (e) {
+                    try {
+                      const txt = await verifyResponse.text();
+                      errMsg = txt || `HTTP Error ${verifyResponse.status}`;
+                    } catch (e2) {
+                      errMsg = `HTTP Error ${verifyResponse.status}`;
+                    }
+                  }
+                  throw new Error(errMsg);
                 }
 
                 const verifyData = await verifyResponse.json();

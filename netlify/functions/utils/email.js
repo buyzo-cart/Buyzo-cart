@@ -18,27 +18,36 @@ async function getVaultConfig() {
   }
 
   return new Promise((resolve) => {
-    const url = `${dbUrl}/owner_vault/config.json?auth=${dbSecret}`;
-    https.get(url, (res) => {
-      let data = '';
-      res.on('data', (chunk) => { data += chunk; });
-      res.on('end', () => {
-        try {
-          if (res.statusCode >= 200 && res.statusCode < 300) {
-            resolve(JSON.parse(data));
-          } else {
-            console.error("[Email Utility] Failed to fetch vault config. Status:", res.statusCode, "Response:", data);
+    try {
+      let cleanDbUrl = dbUrl.trim();
+      if (cleanDbUrl.endsWith('/')) {
+        cleanDbUrl = cleanDbUrl.slice(0, -1);
+      }
+      const url = `${cleanDbUrl}/owner_vault/config.json?auth=${dbSecret}`;
+      https.get(url, (res) => {
+        let data = '';
+        res.on('data', (chunk) => { data += chunk; });
+        res.on('end', () => {
+          try {
+            if (res.statusCode >= 200 && res.statusCode < 300) {
+              resolve(JSON.parse(data));
+            } else {
+              console.error("[Email Utility] Failed to fetch vault config. Status:", res.statusCode, "Response:", data);
+              resolve(null);
+            }
+          } catch (e) {
+            console.error("[Email Utility] Error parsing vault config JSON:", e);
             resolve(null);
           }
-        } catch (e) {
-          console.error("[Email Utility] Error parsing vault config JSON:", e);
-          resolve(null);
-        }
+        });
+      }).on('error', (err) => {
+        console.error("[Email Utility] Error requesting vault config:", err);
+        resolve(null);
       });
-    }).on('error', (err) => {
-      console.error("[Email Utility] Error requesting vault config:", err);
+    } catch (e) {
+      console.error("[Email Utility] Synchronous exception inside getVaultConfig promise:", e);
       resolve(null);
-    });
+    }
   });
 }
 
