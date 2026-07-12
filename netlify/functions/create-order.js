@@ -18,9 +18,9 @@ exports.handler = async function(event, context) {
     return {
       statusCode: 200,
       headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Headers": "Content-Type",
-        "Access-Control-Allow-Methods": "POST, OPTIONS"
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type'
       },
       body: ""
     };
@@ -30,8 +30,10 @@ exports.handler = async function(event, context) {
     return {
       statusCode: 405,
       headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*"
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({ error: "Method Not Allowed. Use POST." })
     };
@@ -45,8 +47,10 @@ exports.handler = async function(event, context) {
       return {
         statusCode: 400,
         headers: {
-          "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*"
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'POST, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type',
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({ error: "Invalid amount. Must be a positive number." })
       };
@@ -75,8 +79,10 @@ exports.handler = async function(event, context) {
       return {
         statusCode: 500,
         headers: {
-          "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*"
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'POST, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type',
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           error: "Payment Gateway configuration error.",
@@ -134,8 +140,10 @@ exports.handler = async function(event, context) {
       return {
         statusCode: 500,
         headers: {
-          "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*"
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'POST, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type',
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           error: "Failed to create Razorpay order.",
@@ -148,8 +156,10 @@ exports.handler = async function(event, context) {
       return {
         statusCode: 200,
         headers: {
-          "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*"
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'POST, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type',
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           order_id: parsedResponse.id,
@@ -163,8 +173,10 @@ exports.handler = async function(event, context) {
       return {
         statusCode: response.statusCode,
         headers: {
-          "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*"
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'POST, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type',
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           error: "Failed to create Razorpay order.",
@@ -178,8 +190,10 @@ exports.handler = async function(event, context) {
     return {
       statusCode: 500,
       headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*"
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({ error: "Internal Server Error.", details: err.message })
     };

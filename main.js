@@ -2991,7 +2991,7 @@
           }
 
           // Create order on the secure backend
-          const createResponse = await fetch('/api/create-order', {
+          const createResponse = await fetch('https://precious-travesseiro-e68f6e.netlify.app/.netlify/functions/create-order', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json'
@@ -3040,7 +3040,7 @@
                 }
 
                 // Verify the payment securely on the backend
-                const verifyResponse = await fetch('/api/verify-payment', {
+                const verifyResponse = await fetch('https://precious-travesseiro-e68f6e.netlify.app/.netlify/functions/verify-payment', {
                   method: 'POST',
                   headers: {
                     'Content-Type': 'application/json'
