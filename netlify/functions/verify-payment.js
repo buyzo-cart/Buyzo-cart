@@ -72,7 +72,8 @@ exports.handler = async function(event, context) {
             "Access-Control-Allow-Origin": "*"
           },
           body: JSON.stringify({
-            error: "Payment Gateway configuration error. Please configure RAZORPAY_KEY_SECRET."
+            error: "Payment Gateway configuration error.",
+            details: "Razorpay Key Secret is missing. Please configure it in your Owner Vault, or set the RAZORPAY_KEY_SECRET environment variable in Netlify Site Settings. Also ensure FIREBASE_DB_SECRET is set in Netlify."
           })
         };
       }

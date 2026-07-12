@@ -79,7 +79,8 @@ exports.handler = async function(event, context) {
           "Access-Control-Allow-Origin": "*"
         },
         body: JSON.stringify({
-          error: "Payment Gateway configuration error. Please configure RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET."
+          error: "Payment Gateway configuration error.",
+          details: "Razorpay Key ID and Secret are missing. Please configure them in your Owner Vault under payments, or set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET environment variables in your Netlify Site Settings. Also make sure FIREBASE_DB_SECRET is set in Netlify so the serverless function can retrieve settings from the database."
         })
       };
     }
@@ -125,7 +126,23 @@ exports.handler = async function(event, context) {
       req.end();
     });
 
-    const parsedResponse = JSON.parse(response.body);
+    let parsedResponse = {};
+    try {
+      parsedResponse = JSON.parse(response.body);
+    } catch (parseErr) {
+      console.error("[Razorpay API] Failed to parse response body:", response.body);
+      return {
+        statusCode: 500,
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*"
+        },
+        body: JSON.stringify({
+          error: "Failed to create Razorpay order.",
+          details: `Invalid response from Razorpay API: ${response.body || 'Empty response'}`
+        })
+      };
+    }
 
     if (response.statusCode >= 200 && response.statusCode < 300) {
       return {

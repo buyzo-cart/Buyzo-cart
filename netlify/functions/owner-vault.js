@@ -24,42 +24,51 @@ async function queryFirebase(path, method = 'GET', payload = null, customAuthTok
     return null;
   }
 
-  const url = `${dbUrl}/${path}.json?auth=${authToken}`;
-  const postData = payload ? JSON.stringify(payload) : null;
-
   return new Promise((resolve, reject) => {
-    const parsedUrl = new URL(url);
-    const options = {
-      hostname: parsedUrl.hostname,
-      port: 443,
-      path: parsedUrl.pathname + parsedUrl.search,
-      method: method,
-      headers: {
-        'Content-Type': 'application/json',
-        ...(postData ? { 'Content-Length': Buffer.byteLength(postData) } : {})
+    try {
+      let cleanDbUrl = dbUrl.trim();
+      if (cleanDbUrl.endsWith('/')) {
+        cleanDbUrl = cleanDbUrl.slice(0, -1);
       }
-    };
+      const url = `${cleanDbUrl}/${path}.json?auth=${authToken}`;
+      const postData = payload ? JSON.stringify(payload) : null;
 
-    const req = https.request(options, (res) => {
-      let responseBody = '';
-      res.on('data', (chunk) => { responseBody += chunk; });
-      res.on('end', () => {
-        try {
-          const parsed = responseBody ? JSON.parse(responseBody) : null;
-          if (res.statusCode >= 200 && res.statusCode < 300) {
-            resolve(parsed);
-          } else {
-            reject(new Error(`Firebase Error (Status: ${res.statusCode}): ${JSON.stringify(parsed)}`));
-          }
-        } catch (e) {
-          reject(e);
+      const parsedUrl = new URL(url);
+      const options = {
+        hostname: parsedUrl.hostname,
+        port: 443,
+        path: parsedUrl.pathname + parsedUrl.search,
+        method: method,
+        headers: {
+          'Content-Type': 'application/json',
+          ...(postData ? { 'Content-Length': Buffer.byteLength(postData) } : {})
         }
-      });
-    });
+      };
 
-    req.on('error', (err) => { reject(err); });
-    if (postData) req.write(postData);
-    req.end();
+      const req = https.request(options, (res) => {
+        let responseBody = '';
+        res.on('data', (chunk) => { responseBody += chunk; });
+        res.on('end', () => {
+          try {
+            const parsed = responseBody ? JSON.parse(responseBody) : null;
+            if (res.statusCode >= 200 && res.statusCode < 300) {
+              resolve(parsed);
+            } else {
+              reject(new Error(`Firebase Error (Status: ${res.statusCode}): ${JSON.stringify(parsed)}`));
+            }
+          } catch (e) {
+            reject(e);
+          }
+        });
+      });
+
+      req.on('error', (err) => { reject(err); });
+      if (postData) req.write(postData);
+      req.end();
+    } catch (e) {
+      console.error("[Owner Vault Backend] Synchronous exception inside queryFirebase promise:", e);
+      reject(e);
+    }
   });
 }
 
