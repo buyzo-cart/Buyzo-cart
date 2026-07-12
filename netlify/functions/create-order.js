@@ -5,6 +5,12 @@
  * Secure Backend Integration: NEVER expose your Razorpay Secret Key in frontend code.
  */
 
+const CORS_HEADERS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+};
+
 // PLACEHOLDERS FOR WEBSITE OWNER:
 const RAZORPAY_KEY_ID_PLACEHOLDER = "";     // <-- ADD YOUR RAZORPAY KEY ID HERE
 const RAZORPAY_KEY_SECRET_PLACEHOLDER = ""; // <-- ADD YOUR RAZORPAY KEY SECRET HERE
@@ -17,11 +23,7 @@ exports.handler = async function(event, context) {
   if (event.httpMethod === 'OPTIONS') {
     return {
       statusCode: 200,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type'
-      },
+      headers: CORS_HEADERS,
       body: ""
     };
   }
@@ -30,9 +32,7 @@ exports.handler = async function(event, context) {
     return {
       statusCode: 405,
       headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type',
+        ...CORS_HEADERS,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({ error: "Method Not Allowed. Use POST." })
@@ -47,9 +47,7 @@ exports.handler = async function(event, context) {
       return {
         statusCode: 400,
         headers: {
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'POST, OPTIONS',
-          'Access-Control-Allow-Headers': 'Content-Type',
+          ...CORS_HEADERS,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({ error: "Invalid amount. Must be a positive number." })
@@ -79,9 +77,7 @@ exports.handler = async function(event, context) {
       return {
         statusCode: 500,
         headers: {
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'POST, OPTIONS',
-          'Access-Control-Allow-Headers': 'Content-Type',
+          ...CORS_HEADERS,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
@@ -140,9 +136,7 @@ exports.handler = async function(event, context) {
       return {
         statusCode: 500,
         headers: {
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'POST, OPTIONS',
-          'Access-Control-Allow-Headers': 'Content-Type',
+          ...CORS_HEADERS,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
@@ -156,9 +150,7 @@ exports.handler = async function(event, context) {
       return {
         statusCode: 200,
         headers: {
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'POST, OPTIONS',
-          'Access-Control-Allow-Headers': 'Content-Type',
+          ...CORS_HEADERS,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
@@ -173,9 +165,7 @@ exports.handler = async function(event, context) {
       return {
         statusCode: response.statusCode,
         headers: {
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'POST, OPTIONS',
-          'Access-Control-Allow-Headers': 'Content-Type',
+          ...CORS_HEADERS,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
@@ -190,9 +180,7 @@ exports.handler = async function(event, context) {
     return {
       statusCode: 500,
       headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type',
+        ...CORS_HEADERS,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({ error: "Internal Server Error.", details: err.message })

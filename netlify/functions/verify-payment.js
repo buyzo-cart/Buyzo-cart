@@ -5,6 +5,12 @@
  * Secure Backend Integration: NEVER expose your Razorpay Secret Key in frontend code.
  */
 
+const CORS_HEADERS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+};
+
 // PLACEHOLDERS FOR WEBSITE OWNER:
 const RAZORPAY_KEY_SECRET_PLACEHOLDER = "";    // <-- ADD YOUR RAZORPAY KEY SECRET HERE
 const RAZORPAY_WEBHOOK_SECRET_PLACEHOLDER = ""; // <-- ADD YOUR RAZORPAY WEBHOOK SECRET HERE (IF USING WEBHOOKS)
@@ -17,11 +23,7 @@ exports.handler = async function(event, context) {
   if (event.httpMethod === 'OPTIONS') {
     return {
       statusCode: 200,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type'
-      },
+      headers: CORS_HEADERS,
       body: ""
     };
   }
@@ -30,9 +32,7 @@ exports.handler = async function(event, context) {
     return {
       statusCode: 405,
       headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type',
+        ...CORS_HEADERS,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({ error: "Method Not Allowed. Use POST." })
@@ -70,9 +70,7 @@ exports.handler = async function(event, context) {
         return {
           statusCode: 500,
           headers: {
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': 'POST, OPTIONS',
-            'Access-Control-Allow-Headers': 'Content-Type',
+            ...CORS_HEADERS,
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
@@ -132,9 +130,7 @@ exports.handler = async function(event, context) {
         return {
           statusCode: 200,
           headers: {
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': 'POST, OPTIONS',
-            'Access-Control-Allow-Headers': 'Content-Type',
+            ...CORS_HEADERS,
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
@@ -182,9 +178,7 @@ exports.handler = async function(event, context) {
         return {
           statusCode: 400,
           headers: {
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': 'POST, OPTIONS',
-            'Access-Control-Allow-Headers': 'Content-Type',
+            ...CORS_HEADERS,
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
@@ -203,9 +197,7 @@ exports.handler = async function(event, context) {
         return {
           statusCode: 500,
           headers: {
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': 'POST, OPTIONS',
-            'Access-Control-Allow-Headers': 'Content-Type',
+            ...CORS_HEADERS,
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({ error: "Webhook Secret not configured." })
@@ -224,9 +216,7 @@ exports.handler = async function(event, context) {
         return {
           statusCode: 200,
           headers: {
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': 'POST, OPTIONS',
-            'Access-Control-Allow-Headers': 'Content-Type',
+            ...CORS_HEADERS,
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({ status: "success", message: "Webhook signature verified." })
@@ -236,9 +226,7 @@ exports.handler = async function(event, context) {
         return {
           statusCode: 400,
           headers: {
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': 'POST, OPTIONS',
-            'Access-Control-Allow-Headers': 'Content-Type',
+            ...CORS_HEADERS,
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({ error: "Webhook signature mismatch." })
@@ -249,9 +237,7 @@ exports.handler = async function(event, context) {
     return {
       statusCode: 400,
       headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type',
+        ...CORS_HEADERS,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({ error: "Missing required verification fields." })
@@ -262,9 +248,7 @@ exports.handler = async function(event, context) {
     return {
       statusCode: 500,
       headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type',
+        ...CORS_HEADERS,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({ error: "Internal Server Error.", details: err.message })
