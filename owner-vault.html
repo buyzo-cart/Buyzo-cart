@@ -266,6 +266,9 @@
       <span>Cart Owner Vault</span>
     </div>
     <div class="header-actions">
+      <button class="btn btn-outline btn-sm" id="logoutBtn" onclick="handleLogout()" style="display: none; padding: 6px 14px; border-radius: var(--radius-sm); margin-right: 8px;">
+        <i class="fas fa-sign-out-alt"></i> Logout
+      </button>
       <button class="btn btn-outline btn-sm" onclick="window.location.href='/'" style="padding: 6px 14px; border-radius: var(--radius-sm);">
         <i class="fas fa-store"></i> Back to Store
       </button>
@@ -570,8 +573,8 @@
   <!-- FIREBASE INTEGRATION & CORE CONTROLLER -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
-    import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-database.js";
-    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js";
+    import { getDatabase, ref, get, set, update } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-database.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js";
 
     // Firebase Config
     const firebaseConfig = {
@@ -598,10 +601,28 @@
       lockoutUntil: 0
     };
 
+    // Password hashing helpers using Web Crypto API (SHA-256)
+    async function hashPassword(password, salt) {
+      const text = password + (salt || "");
+      const encoder = new TextEncoder();
+      const data = encoder.encode(text);
+      const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      const hashHex = hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+      return hashHex;
+    }
+
+    function generateSalt() {
+      const array = new Uint8Array(16);
+      crypto.getRandomValues(array);
+      return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+    }
+
     // Initialize Auth Listener
     onAuthStateChanged(auth, async (user) => {
       if (!user) {
         showStage("loginStage");
+        document.getElementById("logoutBtn").style.display = "none";
         return;
       }
 
@@ -613,8 +634,22 @@
         window._vaultState.idToken = idToken;
 
         // Check if listed in /admins in the database
-        const adminSnap = await get(ref(db, `admins/${user.uid}`));
-        if (!adminSnap.exists() || adminSnap.val() !== true) {
+        let isAdmin = false;
+        if (user.email === 'buyzocartshop@gmail.com') {
+          isAdmin = true;
+        } else {
+          const adminSnap = await get(ref(db, `admins/${user.uid}`));
+          if (adminSnap.exists() && adminSnap.val() === true) {
+            isAdmin = true;
+          } else {
+            const sharedSnap = await get(ref(db, `sharedAdminsByUid/${user.uid}`));
+            if (sharedSnap.exists()) {
+              isAdmin = true;
+            }
+          }
+        }
+
+        if (!isAdmin) {
           // Access Denied
           document.getElementById('loadingStage').innerHTML = `
             <div style="text-align: center; padding: 40px 20px;">
@@ -624,10 +659,12 @@
               <button class="btn btn-outline" onclick="window.location.href='/'" style="margin-top: 20px;">Return to Store</button>
             </div>
           `;
+          document.getElementById("logoutBtn").style.display = "none";
           return;
         }
 
-        // Admin verified! Now check setup status
+        // Admin verified! Show logout button and check setup status
+        document.getElementById("logoutBtn").style.display = "inline-flex";
         await checkVaultSetupStatus();
 
       } catch (err) {
@@ -640,21 +677,13 @@
     async function checkVaultSetupStatus() {
       updateLoadingMsg("Retrieving vault lock status...");
       try {
-        const res = await fetch("https://precious-travesseiro-e68f6e.netlify.app/.netlify/functions/owner-vault/status", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ idToken: window._vaultState.idToken })
-        });
-
-        if (!res.ok) {
-          throw new Error("Backend controller failed to retrieve status.");
-        }
-
-        const data = await res.json();
-        window._vaultState.isSetup = data.isSetup;
+        const securitySnap = await get(ref(db, 'owner_vault/security'));
+        const security = securitySnap.exists() ? securitySnap.val() : {};
+        const isSetup = !!security.password_hash;
+        window._vaultState.isSetup = isSetup;
 
         showStage("lockscreenStage");
-        if (data.isSetup) {
+        if (isSetup) {
           document.getElementById("setupView").style.display = "none";
           document.getElementById("unlockView").style.display = "block";
           document.getElementById("unlockPassword").focus();
@@ -664,21 +693,19 @@
           document.getElementById("setupPassword").focus();
         }
       } catch (err) {
+        console.error("Failed to retrieve status:", err);
         document.getElementById('loadingStage').innerHTML = `
           <div style="text-align: center; padding: 40px 20px;">
             <span style="font-size: 3rem;">⚠️</span>
-            <h2 style="color: var(--danger); margin-top: 12px; font-weight: 800;">Backend Connection Failure</h2>
-            <p style="color: var(--text-secondary); margin-top: 8px; font-size: 14px;">Failed to establish communication with the Owner Vault API serverless backend.</p>
-            <p style="color: var(--text-secondary); font-size: 12px; margin-top: 4px;">Make sure FIREBASE_DB_SECRET is configured in your Netlify Environment Variables.</p>
+            <h2 style="color: var(--danger); margin-top: 12px; font-weight: 800;">Database Connection Failure</h2>
+            <p style="color: var(--text-secondary); margin-top: 8px; font-size: 14px;">Failed to establish communication with the Firebase Realtime Database.</p>
+            <p style="color: var(--text-secondary); font-size: 12px; margin-top: 4px;">${err.message}</p>
             <button class="btn btn-primary" onclick="location.reload()" style="margin-top: 20px;">Retry Connection</button>
           </div>
         `;
       }
     }
-  </script>
 
-  <!-- Frontend logic controller -->
-  <script>
     // General helpers
     function showStage(stageId) {
       document.getElementById("loadingStage").style.display = "none";
@@ -731,28 +758,30 @@
 
       showToast("Initializing Master Password...", "warning");
       try {
-        const res = await fetch("https://precious-travesseiro-e68f6e.netlify.app/.netlify/functions/owner-vault/setup", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            idToken: window._vaultState.idToken,
-            password: pass
-          })
+        const securitySnap = await get(ref(db, 'owner_vault/security'));
+        if (securitySnap.exists() && securitySnap.val().password_hash) {
+          showToast("Master Password has already been set up.", "error");
+          return;
+        }
+
+        const salt = generateSalt();
+        const hash = await hashPassword(pass, salt);
+
+        await set(ref(db, 'owner_vault/security'), {
+          password_hash: hash,
+          salt: salt,
+          failed_attempts: 0,
+          locked_until: 0
         });
 
-        const data = await res.json();
-        if (res.ok && data.success) {
-          showToast("Master Password setup successful! Please unlock.", "success");
-          document.getElementById("setupView").style.display = "none";
-          document.getElementById("unlockView").style.display = "block";
-          document.getElementById("setupPassword").value = "";
-          document.getElementById("setupPasswordConfirm").value = "";
-          document.getElementById("unlockPassword").focus();
-        } else {
-          showToast(data.error || "Setup failed.", "error");
-        }
+        showToast("Master Password setup successful! Please unlock.", "success");
+        document.getElementById("setupView").style.display = "none";
+        document.getElementById("unlockView").style.display = "block";
+        document.getElementById("setupPassword").value = "";
+        document.getElementById("setupPasswordConfirm").value = "";
+        document.getElementById("unlockPassword").focus();
       } catch (err) {
-        showToast("Network error. Try again.", "error");
+        showToast("Setup failed: " + err.message, "error");
       }
     }
 
@@ -770,19 +799,32 @@
       btn.innerHTML = "<i class='fas fa-spinner fa-spin'></i> Decrypting...";
 
       try {
-        const res = await fetch("https://precious-travesseiro-e68f6e.netlify.app/.netlify/functions/owner-vault/unlock", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            idToken: window._vaultState.idToken,
-            password: pass
-          })
-        });
+        const securitySnap = await get(ref(db, 'owner_vault/security'));
+        if (!securitySnap.exists() || !securitySnap.val().password_hash) {
+          showToast("Master Password is not set up yet.", "error");
+          return;
+        }
 
-        const data = await res.json();
-        if (res.ok && data.success) {
-          window._vaultState.vaultToken = data.vaultToken;
-          showToast("Vault successfully unlocked! Decrypting configs...", "success");
+        const security = securitySnap.val();
+        const now = Date.now();
+
+        if (security.locked_until && security.locked_until > now) {
+          const minLeft = Math.ceil((security.locked_until - now) / 60000);
+          showToast(`Vault is locked. Try again in ${minLeft} minute(s).`, "error");
+          startLockoutCountdown(security.locked_until);
+          return;
+        }
+
+        const hash = await hashPassword(pass, security.salt);
+        if (hash === security.password_hash) {
+          // Success: Reset failed attempts
+          await update(ref(db, 'owner_vault/security'), {
+            failed_attempts: 0,
+            locked_until: 0
+          });
+
+          window._vaultState.vaultToken = "local-vault-session-token-" + Date.now();
+          showToast("Vault successfully unlocked!", "success");
 
           // Clear password input
           document.getElementById("unlockPassword").value = "";
@@ -790,15 +832,30 @@
           // Fetch current vault configurations
           await fetchVaultConfigs();
         } else {
-          showToast(data.error || "Incorrect Master Password.", "error");
+          // Failed attempt: increment counter
+          const currentAttempts = (security.failed_attempts || 0) + 1;
+          const maxAttempts = 5;
 
-          // Handle lockout check (Status 423)
-          if (res.status === 423) {
-            startLockoutCountdown(Date.now() + 15 * 60 * 1000); // 15 mins
+          if (currentAttempts >= maxAttempts) {
+            // Lockout for 15 minutes
+            const lockTime = Date.now() + 15 * 60 * 1000;
+            await update(ref(db, 'owner_vault/security'), {
+              failed_attempts: 0,
+              locked_until: lockTime
+            });
+
+            showToast("Too many incorrect attempts. Vault has been locked for 15 minutes.", "error");
+            startLockoutCountdown(lockTime);
+          } else {
+            await update(ref(db, 'owner_vault/security'), {
+              failed_attempts: currentAttempts
+            });
+            const remaining = maxAttempts - currentAttempts;
+            showToast(`Incorrect password. ${remaining} attempt(s) remaining.`, "error");
           }
         }
       } catch (err) {
-        showToast("Network error. Please try again.", "error");
+        showToast("Unlock failed: " + err.message, "error");
       } finally {
         btn.disabled = false;
         btn.innerHTML = "<i class='fas fa-unlock'></i> Unlock Owner Vault";
@@ -838,24 +895,12 @@
     // Fetch Configurations
     async function fetchVaultConfigs() {
       try {
-        const res = await fetch("https://precious-travesseiro-e68f6e.netlify.app/.netlify/functions/owner-vault/get-config", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            idToken: window._vaultState.idToken,
-            vaultToken: window._vaultState.vaultToken
-          })
-        });
-
-        const data = await res.json();
-        if (res.ok && data.config) {
-          populateConfigUI(data.config);
-          showStage("dashboardStage");
-        } else {
-          showToast(data.error || "Failed to fetch configurations.", "error");
-        }
+        const configSnap = await get(ref(db, 'owner_vault/config'));
+        const config = configSnap.exists() ? configSnap.val() : {};
+        populateConfigUI(config);
+        showStage("dashboardStage");
       } catch (err) {
-        showToast("Failed to retrieve vault data.", "error");
+        showToast("Failed to retrieve vault data: " + err.message, "error");
       }
     }
 
@@ -944,24 +989,10 @@
       };
 
       try {
-        const res = await fetch("https://precious-travesseiro-e68f6e.netlify.app/.netlify/functions/owner-vault/update-config", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            idToken: window._vaultState.idToken,
-            vaultToken: window._vaultState.vaultToken,
-            config: config
-          })
-        });
-
-        const data = await res.json();
-        if (res.ok && data.success) {
-          showToast("All configuration updates saved successfully! ⚙️", "success");
-        } else {
-          showToast(data.error || "Failed to update configurations.", "error");
-        }
+        await update(ref(db, 'owner_vault/config'), config);
+        showToast("All configuration updates saved successfully! ⚙️", "success");
       } catch (err) {
-        showToast("Network failure. Save failed.", "error");
+        showToast("Save failed: " + err.message, "error");
       } finally {
         btn.disabled = false;
         btn.innerHTML = "<i class='fas fa-save'></i> Save All Configurations";
@@ -988,28 +1019,30 @@
       }
 
       try {
-        const res = await fetch("https://precious-travesseiro-e68f6e.netlify.app/.netlify/functions/owner-vault/change-password", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            idToken: window._vaultState.idToken,
-            vaultToken: window._vaultState.vaultToken,
-            currentPassword: cur,
-            newPassword: nPass
-          })
+        const securitySnap = await get(ref(db, 'owner_vault/security'));
+        const security = securitySnap.exists() ? securitySnap.val() : {};
+
+        const oldHash = await hashPassword(cur, security.salt);
+        if (oldHash !== security.password_hash) {
+          showToast("Current Master Password is incorrect.", "error");
+          return;
+        }
+
+        const newSalt = generateSalt();
+        const newHash = await hashPassword(nPass, newSalt);
+
+        await update(ref(db, 'owner_vault/security'), {
+          password_hash: newHash,
+          salt: newSalt,
+          failed_attempts: 0
         });
 
-        const data = await res.json();
-        if (res.ok && data.success) {
-          showToast("Master Password updated successfully! 🔐", "success");
-          document.getElementById("changeCurrentPassword").value = "";
-          document.getElementById("changeNewPassword").value = "";
-          document.getElementById("changeNewPasswordConfirm").value = "";
-        } else {
-          showToast(data.error || "Password change failed.", "error");
-        }
+        showToast("Master Password updated successfully! 🔐", "success");
+        document.getElementById("changeCurrentPassword").value = "";
+        document.getElementById("changeNewPassword").value = "";
+        document.getElementById("changeNewPasswordConfirm").value = "";
       } catch (err) {
-        showToast("Network error. Try again.", "error");
+        showToast("Password change failed: " + err.message, "error");
       }
     }
 
@@ -1024,26 +1057,44 @@
       if (!confirm("Are you sure you want to overwrite your Master Password?")) return;
 
       try {
-        const res = await fetch("https://precious-travesseiro-e68f6e.netlify.app/.netlify/functions/owner-vault/reset-password", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            idToken: window._vaultState.idToken,
-            newPassword: pass
-          })
+        const newSalt = generateSalt();
+        const newHash = await hashPassword(pass, newSalt);
+
+        await update(ref(db, 'owner_vault/security'), {
+          password_hash: newHash,
+          salt: newSalt,
+          failed_attempts: 0,
+          locked_until: 0
         });
 
-        const data = await res.json();
-        if (res.ok && data.success) {
-          showToast("Master Password has been reset successfully! ✅", "success");
-          document.getElementById("resetPasswordInput").value = "";
-        } else {
-          showToast(data.error || "Reset failed.", "error");
-        }
+        showToast("Master Password has been reset successfully! ✅", "success");
+        document.getElementById("resetPasswordInput").value = "";
       } catch (err) {
-        showToast("Network error.", "error");
+        showToast("Reset failed: " + err.message, "error");
       }
     }
+
+    // Logout
+    async function handleLogout() {
+      try {
+        await signOut(auth);
+        showToast("Logged out successfully.", "success");
+      } catch (err) {
+        showToast("Logout failed: " + err.message, "error");
+      }
+    }
+
+    // Expose functions to global window object
+    window.triggerAdminLogin = triggerAdminLogin;
+    window.handleSetupPassword = handleSetupPassword;
+    window.handleUnlock = handleUnlock;
+    window.handleChangePassword = handleChangePassword;
+    window.handleOwnerPasswordReset = handleOwnerPasswordReset;
+    window.handleSaveAllConfigs = handleSaveAllConfigs;
+    window.switchTab = switchTab;
+    window.handleLogout = handleLogout;
+    window.showStage = showStage;
+    window.populateConfigUI = populateConfigUI;
   </script>
 
   <!-- Devtools / Click Prevention Protection matching security.js -->
