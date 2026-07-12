@@ -23,7 +23,11 @@ exports.handler = async function(event, context) {
   if (event.httpMethod === 'OPTIONS') {
     return {
       statusCode: 200,
-      headers: CORS_HEADERS,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+      },
       body: ""
     };
   }
@@ -32,7 +36,9 @@ exports.handler = async function(event, context) {
     return {
       statusCode: 405,
       headers: {
-        ...CORS_HEADERS,
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({ error: "Method Not Allowed. Use POST." })
@@ -47,7 +53,9 @@ exports.handler = async function(event, context) {
       return {
         statusCode: 400,
         headers: {
-          ...CORS_HEADERS,
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'POST, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({ error: "Invalid amount. Must be a positive number." })
@@ -59,6 +67,7 @@ exports.handler = async function(event, context) {
     let keySecret = RAZORPAY_KEY_SECRET_PLACEHOLDER;
 
     try {
+      // Securely retrieve settings from Firebase via Owner Vault configuration
       const vaultConfig = await getVaultConfig();
       if (vaultConfig && vaultConfig.payment) {
         if (vaultConfig.payment.razorpayKeyId) keyId = vaultConfig.payment.razorpayKeyId;
@@ -66,6 +75,9 @@ exports.handler = async function(event, context) {
       }
     } catch (e) {
       console.error("[Razorpay Order] Failed to load config from Owner Vault:", e);
+      // Safe fallback inside the catch block to guarantee execution continues
+      keyId = process.env.RAZORPAY_KEY_ID || keyId;
+      keySecret = process.env.RAZORPAY_KEY_SECRET || keySecret;
     }
 
     // Environment variables override database configs
@@ -77,7 +89,9 @@ exports.handler = async function(event, context) {
       return {
         statusCode: 500,
         headers: {
-          ...CORS_HEADERS,
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'POST, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
@@ -136,7 +150,9 @@ exports.handler = async function(event, context) {
       return {
         statusCode: 500,
         headers: {
-          ...CORS_HEADERS,
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'POST, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
@@ -150,7 +166,9 @@ exports.handler = async function(event, context) {
       return {
         statusCode: 200,
         headers: {
-          ...CORS_HEADERS,
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'POST, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
@@ -165,7 +183,9 @@ exports.handler = async function(event, context) {
       return {
         statusCode: response.statusCode,
         headers: {
-          ...CORS_HEADERS,
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'POST, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
@@ -180,7 +200,9 @@ exports.handler = async function(event, context) {
     return {
       statusCode: 500,
       headers: {
-        ...CORS_HEADERS,
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({ error: "Internal Server Error.", details: err.message })

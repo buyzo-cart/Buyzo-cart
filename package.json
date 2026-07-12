@@ -1,0 +1,11 @@
+{
+  "name": "buyzo-cart",
+  "version": "1.0.0",
+  "description": "Buyzo Cart frontend and Netlify serverless functions",
+  "main": "main.js",
+  "dependencies": {
+    "nodemailer": "^6.9.13",
+    "firebase-admin": "^12.0.0",
+    "bcryptjs": "^2.4.3"
+  }
+}
