@@ -1,6 +1,69 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <!-- Security Style -->
+  <style>
+  body {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+  }
+  input, textarea {
+    -webkit-user-select: text;
+    user-select: text;
+  }
+  </style>
+  <!-- Security Protection -->
+  <script>
+  (function() {
+    // Block iFrame embedding
+    if (window.self !== window.top) {
+      document.documentElement.innerHTML = '';
+      window.location.href = 'about:blank';
+      throw new Error('Embedding blocked');
+    }
+
+    // Block DevTools keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'F12') { e.preventDefault(); return false; }
+      if (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C')) { e.preventDefault(); return false; }
+      if (e.ctrlKey && e.key === 'U') { e.preventDefault(); return false; }
+      if (e.metaKey && e.altKey && e.key === 'I') { e.preventDefault(); return false; }
+      if (e.ctrlKey && e.key === 's') { e.preventDefault(); return false; }
+    });
+
+    // Block right-click context menu
+    document.addEventListener('contextmenu', function(e) { e.preventDefault(); return false; });
+
+    // Block text selection
+    document.addEventListener('selectstart', function(e) { e.preventDefault(); return false; });
+
+    // Block copy
+    document.addEventListener('copy', function(e) { e.preventDefault(); return false; });
+
+    // DevTools detection - redirect if opened
+    let devToolsOpen = false;
+    const threshold = 160;
+    setInterval(function() {
+      if (window.outerWidth - window.innerWidth > threshold || window.outerHeight - window.innerHeight > threshold) {
+        if (!devToolsOpen) {
+          devToolsOpen = true;
+          document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;"><h2>⚠️ Access Restricted</h2></div>';
+        }
+      } else {
+        devToolsOpen = false;
+      }
+    }, 1000);
+
+    // Domain lock - only run on buyzocart.shop
+    const allowedDomains = ['buyzocart.shop', 'www.buyzocart.shop', 'precious-travesseiro-e68f6e.netlify.app'];
+    if (!allowedDomains.includes(window.location.hostname)) {
+      document.documentElement.innerHTML = '<h1>Unauthorized Domain</h1>';
+      throw new Error('Unauthorized domain');
+    }
+  })();
+  </script>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>About Us - Buyzo Cart</title>
