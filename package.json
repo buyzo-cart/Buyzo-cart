@@ -3,9 +3,16 @@
   "version": "1.0.0",
   "description": "Buyzo Cart frontend and Netlify serverless functions",
   "main": "main.js",
+  "scripts": {
+    "build": "node build.js",
+    "postinstall": "node build.js"
+  },
   "dependencies": {
-    "nodemailer": "^6.9.13",
+    "bcryptjs": "^2.4.3",
     "firebase-admin": "^12.0.0",
-    "bcryptjs": "^2.4.3"
+    "nodemailer": "^6.9.13"
+  },
+  "devDependencies": {
+    "javascript-obfuscator": "^5.4.7"
   }
 }
