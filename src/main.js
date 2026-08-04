@@ -4730,8 +4730,8 @@
         // 4. Set up ActionCodeSettings correctly with the production domain and local support
         const actionCodeSettings = {
           url: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-            ? window.location.origin + '/'
-            : 'https://buyzocart.shop/',
+            ? window.location.origin + '/reset-password.html'
+            : 'https://buyzocart.shop/reset-password.html',
           handleCodeInApp: false
         };
 
@@ -6741,7 +6741,14 @@
       setupSearchInput();
       setupViewAllRatings();
       updateAdminSettingsUI();
-      if (window.location.hash) {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (window.location.hash === '#login' || urlParams.get('login') === 'true') {
+        showLoginModal();
+      } else if (window.location.hash === '#forgot-password' || urlParams.get('forgot') === 'true') {
+        showLoginModal();
+        document.getElementById('loginForm')?.classList.remove('active');
+        document.getElementById('forgotPasswordForm')?.classList.add('active');
+      } else if (window.location.hash) {
         const _hash3 = window.location.hash.substring(1);
         const _pid3 = typeof _resolveProductHash === 'function'
           ? _resolveProductHash(_hash3)
