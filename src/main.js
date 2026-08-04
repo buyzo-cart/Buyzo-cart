@@ -4730,8 +4730,8 @@
         // 4. Set up ActionCodeSettings correctly with the production domain and local support
         const actionCodeSettings = {
           url: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-            ? window.location.origin + '/'
-            : 'https://buyzocart.shop/',
+            ? window.location.origin + '/reset-password.html'
+            : 'https://buyzocart.shop/reset-password.html',
           handleCodeInApp: false
         };
 
@@ -6756,6 +6756,24 @@
           }, 100);
         }
       }
+
+      // Check for login/forgot password redirect params
+      const checkParamsAndHash = () => {
+        const queryParams = new URLSearchParams(window.location.search);
+        const hash = window.location.hash;
+        if (queryParams.get('login') === 'true' || hash === '#login') {
+          setTimeout(() => { if (typeof showLoginModal === 'function') showLoginModal(); }, 500);
+        } else if (queryParams.get('forgot') === 'true' || hash === '#forgot') {
+          setTimeout(() => {
+            if (typeof showLoginModal === 'function') {
+              showLoginModal();
+              document.getElementById('loginForm')?.classList.remove('active');
+              document.getElementById('forgotPasswordForm')?.classList.add('active');
+            }
+          }, 500);
+        }
+      };
+      checkParamsAndHash();
     }
 
     function copyOfferCode(code) {
