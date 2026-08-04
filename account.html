@@ -1243,14 +1243,67 @@
 
       // Send Reset Link
       if (e.target.id === 'sendResetLink') {
+        const sendResetLinkBtn = document.getElementById('sendResetLink');
         const user = window._accCurrentUser;
         if (!user) return;
+
+        // 1. Verify Firebase Auth and sendPasswordResetEmail are initialized
+        if (!auth || !sendPasswordResetEmail) {
+          accShowToast('Firebase Authentication is not yet initialized. Please wait a moment.', 'error');
+          return;
+        }
+
+        const emailTrimmed = (user.email || '').trim();
+
+        // 2. Validate email address client-side before calling Firebase API
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailTrimmed || !emailRegex.test(emailTrimmed)) {
+          accShowToast('The email address is invalid.', 'error');
+          return;
+        }
+
         try {
-          await sendPasswordResetEmail(auth, user.email);
+          if (sendResetLinkBtn) {
+            sendResetLinkBtn.disabled = true;
+            sendResetLinkBtn.innerHTML = '<div class="loading-spinner"></div> Sending...';
+          }
+
+          // 3. Set up ActionCodeSettings dynamically for localhost / production support
+          const actionCodeSettings = {
+            url: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+              ? window.location.origin + '/'
+              : 'https://buyzocart.shop/',
+            handleCodeInApp: false
+          };
+
+          // 4. Send the reset password email using ActionCodeSettings
+          await sendPasswordResetEmail(auth, emailTrimmed, actionCodeSettings);
+
           accShowToast('Reset link sent! Check email', 'success');
           accCloseModal('changePasswordModal');
-        } catch (e) {
-          accShowToast('Failed to send email', 'error');
+        } catch (err) {
+          console.error('Account change password reset error:', err);
+
+          // 5. Display proper success and error messages for all Firebase Auth errors
+          let friendlyMessage = err.message || 'Failed to send email.';
+          const errorCode = err.code || (err.message && err.message.includes('auth/') ? err.message.match(/auth\/[a-zA-Z0-9-]+/)?.[0] : null);
+
+          if (errorCode === 'auth/user-not-found') {
+            friendlyMessage = 'No user found with this email address. Please make sure the account is registered.';
+          } else if (errorCode === 'auth/invalid-email') {
+            friendlyMessage = 'The email address is invalid. Please check the format.';
+          } else if (errorCode === 'auth/network-request-failed') {
+            friendlyMessage = 'Network request failed. Please check your internet connection.';
+          } else if (errorCode === 'auth/too-many-requests') {
+            friendlyMessage = 'Too many requests. Please wait a moment and try again.';
+          }
+
+          accShowToast(friendlyMessage, 'error');
+        } finally {
+          if (sendResetLinkBtn) {
+            sendResetLinkBtn.disabled = false;
+            sendResetLinkBtn.textContent = 'Send Reset Link';
+          }
         }
       }
 

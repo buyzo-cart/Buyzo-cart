@@ -4698,23 +4698,68 @@
     }
 
     async function handleResetPassword() {
-      const email = document.getElementById('forgotPasswordEmail').value;
+      const emailInput = document.getElementById('forgotPasswordEmail');
+      const email = emailInput ? emailInput.value : '';
       const resetPasswordBtn = document.getElementById('resetPasswordBtn');
+
+      // 1. Verify email input exists
       if (!email) {
         showToast('Please enter your email address', 'error');
         return;
       }
+
+      const emailTrimmed = email.trim();
+
+      // 2. Validate email address client-side before calling Firebase API
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(emailTrimmed)) {
+        showToast('Please enter a valid email address.', 'error');
+        return;
+      }
+
+      // 3. Verify Firebase and Auth instance are fully initialized before attempting to reset password
+      if (!window.firebase || !window.firebase.auth || !window.firebase.sendPasswordResetEmail) {
+        showToast('Firebase Authentication is not yet initialized. Please wait a moment and try again.', 'error');
+        return;
+      }
+
       try {
         resetPasswordBtn.disabled = true;
         resetPasswordBtn.innerHTML = '<div class="loading-spinner"></div> Sending...';
-        await window.firebase.sendPasswordResetEmail(window.firebase.auth, email);
+
+        // 4. Set up ActionCodeSettings correctly with the production domain and local support
+        const actionCodeSettings = {
+          url: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+            ? window.location.origin + '/'
+            : 'https://buyzocart.shop/',
+          handleCodeInApp: false
+        };
+
+        // 5. Call sendPasswordResetEmail with ActionCodeSettings configured with production/localhost domain
+        await window.firebase.sendPasswordResetEmail(window.firebase.auth, emailTrimmed, actionCodeSettings);
+
         showToast('Password reset email sent! Check your inbox.', 'success');
         sendPasswordChangeNotif();
-        document.getElementById('forgotPasswordEmail').value = '';
+        if (emailInput) emailInput.value = '';
         setTimeout(() => document.getElementById('authModal').classList.remove('active'), 2000);
       } catch (err) {
         console.error('Password reset error:', err);
-        showToast(err.message, 'error');
+
+        // 6. Map and display user-friendly success and error messages for all Firebase Auth errors
+        let friendlyMessage = err.message || 'An error occurred while trying to send the reset email.';
+        const errorCode = err.code || (err.message && err.message.includes('auth/') ? err.message.match(/auth\/[a-zA-Z0-9-]+/)?.[0] : null);
+
+        if (errorCode === 'auth/user-not-found') {
+          friendlyMessage = 'No user found with this email address. Please make sure you have registered.';
+        } else if (errorCode === 'auth/invalid-email') {
+          friendlyMessage = 'The email address is invalid. Please check the format.';
+        } else if (errorCode === 'auth/network-request-failed') {
+          friendlyMessage = 'Network request failed. Please check your internet connection.';
+        } else if (errorCode === 'auth/too-many-requests') {
+          friendlyMessage = 'Too many requests. Please wait a moment and try again.';
+        }
+
+        showToast(friendlyMessage, 'error');
       } finally {
         resetPasswordBtn.disabled = false;
         resetPasswordBtn.textContent = 'Send Reset Link';
