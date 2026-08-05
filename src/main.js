@@ -4730,8 +4730,8 @@
         // 4. Set up ActionCodeSettings correctly with the production domain and local support
         const actionCodeSettings = {
           url: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-            ? window.location.origin + '/reset-password.html'
-            : 'https://buyzocart.shop/reset-password.html',
+            ? window.location.origin + '/reset-password'
+            : 'https://buyzocart.shop/reset-password',
           handleCodeInApp: false
         };
 

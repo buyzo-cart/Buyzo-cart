@@ -15,6 +15,9 @@
 /terms.html          /terms             301
 /contact.html        /contact           301
 /sellproduct.html    /sellproduct       301
+/reset-password.html /reset-password    301
+/login.html          /login             301
+/forgot-password.html /forgot-password   301
 
 # Clean URLs ko actual HTML files pe serve karo (200 = rewrite, not redirect)
 /owner-vault         /owner-vault.html  200
@@ -25,3 +28,6 @@
 /terms               /terms.html        200
 /contact             /contact.html      200
 /sellproduct         /sellproduct.html  200
+/reset-password      /reset-password.html 200
+/login               /login.html        200
+/forgot-password     /forgot-password.html 200
