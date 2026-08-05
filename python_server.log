@@ -1,8 +1,2 @@
-127.0.0.1 - - [04/Aug/2026 17:22:15] "GET /reset-password.html?mode=resetPassword&oobCode=expiredcode HTTP/1.1" 200 -
-127.0.0.1 - - [04/Aug/2026 17:22:15] "GET /style.css HTTP/1.1" 200 -
-127.0.0.1 - - [04/Aug/2026 17:23:24] "GET /reset-password.html?mode=resetPassword&oobCode=expiredcode HTTP/1.1" 200 -
-127.0.0.1 - - [04/Aug/2026 17:23:24] "GET /style.css HTTP/1.1" 200 -
-127.0.0.1 - - [04/Aug/2026 17:24:04] "GET /reset-password.html?mode=resetPassword&oobCode=validcode HTTP/1.1" 200 -
-127.0.0.1 - - [04/Aug/2026 17:24:04] "GET /style.css HTTP/1.1" 200 -
-127.0.0.1 - - [04/Aug/2026 17:25:21] "GET /reset-password.html?mode=resetPassword&oobCode=validcode HTTP/1.1" 200 -
-127.0.0.1 - - [04/Aug/2026 17:25:21] "GET /style.css HTTP/1.1" 200 -
+127.0.0.1 - - [05/Aug/2026 08:33:18] "GET /reset-password.html?mode=resetPassword&oobCode=validcode HTTP/1.1" 200 -
+127.0.0.1 - - [05/Aug/2026 08:33:18] "GET /style.css HTTP/1.1" 200 -
