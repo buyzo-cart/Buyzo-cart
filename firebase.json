@@ -1,0 +1,157 @@
+{
+  "hosting": {
+    "public": ".",
+    "ignore": [
+      "firebase.json",
+      ".firebaserc",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "cleanUrls": false,
+    "trailingSlash": false,
+    "redirects": [
+      {
+        "source": "/owner-vault.html",
+        "destination": "/owner-vault",
+        "type": 301
+      },
+      {
+        "source": "/account.html",
+        "destination": "/account",
+        "type": 301
+      },
+      {
+        "source": "/refund.html",
+        "destination": "/refund",
+        "type": 301
+      },
+      {
+        "source": "/privacy.html",
+        "destination": "/privacy",
+        "type": 301
+      },
+      {
+        "source": "/shipping.html",
+        "destination": "/shipping",
+        "type": 301
+      },
+      {
+        "source": "/terms.html",
+        "destination": "/terms",
+        "type": 301
+      },
+      {
+        "source": "/contact.html",
+        "destination": "/contact",
+        "type": 301
+      },
+      {
+        "source": "/about.html",
+        "destination": "/about",
+        "type": 301
+      },
+      {
+        "source": "/sell-product.html",
+        "destination": "/sellproduct",
+        "type": 301
+      },
+      {
+        "source": "/sellproduct.html",
+        "destination": "/sellproduct",
+        "type": 301
+      },
+      {
+        "source": "/login.html",
+        "destination": "/login",
+        "type": 301
+      },
+      {
+        "source": "/forgot-password.html",
+        "destination": "/forgot-password",
+        "type": 301
+      },
+      {
+        "source": "/api/create-order",
+        "destination": "https://precious-travesseiro-e68f6e.netlify.app/.netlify/functions/create-order",
+        "type": 302
+      },
+      {
+        "source": "/api/verify-payment",
+        "destination": "https://precious-travesseiro-e68f6e.netlify.app/.netlify/functions/verify-payment",
+        "type": 302
+      },
+      {
+        "source": "/api/owner-vault",
+        "destination": "https://precious-travesseiro-e68f6e.netlify.app/.netlify/functions/owner-vault",
+        "type": 302
+      },
+      {
+        "source": "/api/owner-vault/:splat*",
+        "destination": "https://precious-travesseiro-e68f6e.netlify.app/.netlify/functions/owner-vault/:splat*",
+        "type": 302
+      }
+    ],
+    "rewrites": [
+      {
+        "source": "/owner-vault",
+        "destination": "/owner-vault.html"
+      },
+      {
+        "source": "/account",
+        "destination": "/account.html"
+      },
+      {
+        "source": "/refund",
+        "destination": "/refund.html"
+      },
+      {
+        "source": "/privacy",
+        "destination": "/privacy.html"
+      },
+      {
+        "source": "/shipping",
+        "destination": "/shipping.html"
+      },
+      {
+        "source": "/terms",
+        "destination": "/terms.html"
+      },
+      {
+        "source": "/contact",
+        "destination": "/contact.html"
+      },
+      {
+        "source": "/about",
+        "destination": "/about.html"
+      },
+      {
+        "source": "/sellproduct",
+        "destination": "/sell-product.html"
+      },
+      {
+        "source": "/reset-password",
+        "destination": "/reset-password.html"
+      },
+      {
+        "source": "/login",
+        "destination": "/login.html"
+      },
+      {
+        "source": "/forgot-password",
+        "destination": "/forgot-password.html"
+      },
+      {
+        "source": "/auth/reset-password",
+        "destination": "/reset-password.html"
+      },
+      {
+        "source": "/auth/reset-password.html",
+        "destination": "/reset-password.html"
+      },
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  }
+}

@@ -1,2 +1,2 @@
-127.0.0.1 - - [05/Aug/2026 08:33:18] "GET /reset-password.html?mode=resetPassword&oobCode=validcode HTTP/1.1" 200 -
-127.0.0.1 - - [05/Aug/2026 08:33:18] "GET /style.css HTTP/1.1" 200 -
+127.0.0.1 - - [16/Aug/2026 18:42:43] "HEAD / HTTP/1.1" 200 -
+127.0.0.1 - - [16/Aug/2026 18:42:43] "HEAD /reset-password.html HTTP/1.1" 200 -
